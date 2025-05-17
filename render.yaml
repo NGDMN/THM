@@ -13,4 +13,6 @@ services:
         value: "True"
       - key: PYTHON_VERSION
         value: "3.9.7"
+      - key: PIP_ONLY_BINARY
+        value: "numpy,scipy,pandas,scikit-learn"
     healthCheckPath: / 
