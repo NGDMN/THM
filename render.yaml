@@ -2,7 +2,7 @@ services:
   - type: web
     name: thm-api
     env: python
-    buildCommand: ./build.sh
+    buildCommand: chmod +x build.sh && ./build.sh
     startCommand: gunicorn --chdir api app:app --bind 0.0.0.0:$PORT
     envVars:
       - key: FLASK_APP
@@ -11,4 +11,6 @@ services:
         value: production
       - key: USE_MOCK_DATA
         value: True
+      - key: PYTHON_VERSION
+        value: 3.9.16
     healthCheckPath: / 
