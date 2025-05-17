@@ -1,0 +1,68 @@
+# Dados grandes
+data/dados_meteorologicos_limpos.csv
+
+# Arquivos compilados/bytecode Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Arquivos node/frontend
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+.pnp/
+.pnp.js
+coverage/
+build/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.cache/
+
+# Ambiente virtual Python
+venv/
+ENV/
+env/
+
+# Arquivos de configuração locais
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Oracle Wallet
+*.zip
+Wallet_*/
+*.sso
+*.p12
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Outros
+*.swp
+.DS_Store
+Thumbs.db
+*.log
+logs/ 
