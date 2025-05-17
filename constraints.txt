@@ -1,0 +1,5 @@
+--only-binary=:all: numpy
+--only-binary=:all: scipy
+--only-binary=:all: pandas
+--only-binary=:all: scikit-learn
+numpy==1.19.5 

@@ -12,7 +12,7 @@ services:
       - key: USE_MOCK_DATA
         value: "True"
       - key: PYTHON_VERSION
-        value: "3.9.7"
+        value: "3.9.0"
       - key: PIP_ONLY_BINARY
         value: "numpy,scipy,pandas,scikit-learn"
     healthCheckPath: / 
