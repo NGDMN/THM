@@ -9,10 +9,11 @@ pip install scipy>=1.8.0
 pip install pandas>=1.4.0
 pip install scikit-learn>=1.0.0
 pip install markupsafe
+pip install werkzeug
 
-# Entrar na pasta da API e instalar as dependências restantes
+# Entrar na pasta da API e instalar as dependências do Flask com suas dependências
 cd api
-pip install --no-deps gunicorn==20.1.0 Flask==2.0.1 Flask-Cors==3.0.10 python-dotenv==0.19.0
+pip install Flask==2.0.1 Flask-Cors==3.0.10 python-dotenv==0.19.0 gunicorn==20.1.0
 
 # Iniciar a API
 gunicorn app:app --bind 0.0.0.0:$PORT 
