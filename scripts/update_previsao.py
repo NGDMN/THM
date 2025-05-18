@@ -3,7 +3,7 @@
 
 """
 Script para atualizar previsões de chuva diariamente, 
-buscando dados de uma API externa de previsão do tempo.
+buscando dados da API Climatempo e atualizar o banco de dados.
 Deve ser executado como um job agendado (cron, Windows Task Scheduler).
 """
 
@@ -34,8 +34,11 @@ sys.path.append(BASE_DIR)
 from api.config import DB_CONFIG
 
 # Configurações da API de previsão do tempo
-# Substitua pela sua chave de API real
+# Obter chave API do ambiente ou do arquivo de configuração
 API_KEY = os.getenv('API_CLIMATEMPO_KEY', '')
+
+# Nível de precipitação para emitir alerta (em mm)
+LIMIAR_ALERTA_CHUVA = 30.0  # mm de chuva por dia
 
 # Lista de cidades a serem monitoradas
 CIDADES = [
@@ -62,7 +65,7 @@ def conectar_banco():
 
 def obter_previsao_api(cidade_id):
     """
-    Obtém previsão de chuva da API do Climatempo
+    Obtém previsão de chuva da API do Climatempo para os próximos 7 dias
     
     Args:
         cidade_id (str): ID da cidade na API do Climatempo
@@ -82,12 +85,18 @@ def obter_previsao_api(cidade_id):
             data = response.json()
             previsoes = []
             
-            # Extrair dados de chuva dos próximos dias
+            # Extrair dados de chuva dos próximos dias (hoje + 6 dias)
+            hoje = datetime.now().date()
+            contador_dias = 0
+            
             for dia in data.get('data', []):
-                previsoes.append({
-                    'data': dia['date'],
-                    'precipitacao': dia['rain']['precipitation']
-                })
+                data_previsao = datetime.strptime(dia['date'], '%Y-%m-%d').date()
+                if data_previsao >= hoje and contador_dias < 7:
+                    previsoes.append({
+                        'data': dia['date'],
+                        'precipitacao': dia['rain']['precipitation']
+                    })
+                    contador_dias += 1
             
             return previsoes
         else:
@@ -197,6 +206,88 @@ def salvar_previsoes(cidade, previsoes):
         cursor.close()
         conn.close()
 
+def verificar_alerta_alagamentos():
+    """
+    Verifica municípios com risco de alagamentos baseado nas previsões de chuva
+    e atualiza a tabela de configuração do sistema com essa informação
+    
+    Returns:
+        list: Lista de municípios com alertas
+    """
+    conn = conectar_banco()
+    if not conn:
+        return []
+        
+    cursor = conn.cursor()
+    municipios_alerta = []
+    
+    try:
+        # Buscar municípios com previsão de chuva acima do limiar
+        hoje = datetime.now().date()
+        proximos_dias = hoje + timedelta(days=6)
+        
+        query = """
+        SELECT municipio, estado, data, precipitacao_diaria
+        FROM chuvas_diarias
+        WHERE data BETWEEN %s AND %s
+        AND precipitacao_diaria >= %s
+        ORDER BY data, municipio
+        """
+        
+        cursor.execute(query, (hoje, proximos_dias, LIMIAR_ALERTA_CHUVA))
+        resultados = cursor.fetchall()
+        
+        for municipio, estado, data, precipitacao in resultados:
+            municipios_alerta.append({
+                'municipio': municipio,
+                'estado': estado,
+                'data': data.strftime('%Y-%m-%d'),
+                'precipitacao': precipitacao
+            })
+            logging.info(f"ALERTA: {municipio}/{estado} com previsão de {precipitacao}mm para {data}")
+        
+        # Atualizar configuração do sistema com informação de alerta
+        if municipios_alerta:
+            # Converter para JSON para armazenar no banco
+            json_alerta = json.dumps(municipios_alerta)
+            
+            query_update = """
+            UPDATE configuracao_sistema
+            SET valor = %s, data_atualizacao = CURRENT_TIMESTAMP
+            WHERE chave = 'ALERTA_ALAGAMENTOS'
+            """
+            
+            cursor.execute(query_update, (json_alerta,))
+            
+            # Se não existir o registro, criar
+            if cursor.rowcount == 0:
+                query_insert = """
+                INSERT INTO configuracao_sistema (chave, valor, descricao)
+                VALUES ('ALERTA_ALAGAMENTOS', %s, 'Municípios com alerta de alagamentos')
+                """
+                cursor.execute(query_insert, (json_alerta,))
+            
+            conn.commit()
+        else:
+            # Se não houver alertas, limpar o valor anterior
+            query_update = """
+            UPDATE configuracao_sistema
+            SET valor = '[]', data_atualizacao = CURRENT_TIMESTAMP
+            WHERE chave = 'ALERTA_ALAGAMENTOS'
+            """
+            cursor.execute(query_update)
+            conn.commit()
+            
+        return municipios_alerta
+            
+    except Exception as e:
+        conn.rollback()
+        logging.error(f"Erro ao verificar alertas de alagamentos: {e}")
+        return []
+    finally:
+        cursor.close()
+        conn.close()
+
 def main():
     """Função principal para atualizar previsões de todas as cidades"""
     logging.info("Iniciando atualização de previsões de chuva...")
@@ -222,6 +313,15 @@ def main():
                 logging.warning(f"Falha ao salvar previsões para {cidade['nome']}")
         else:
             logging.error(f"Não foi possível obter previsões para {cidade['nome']}")
+    
+    # Verificar alertas de alagamentos
+    municipios_alerta = verificar_alerta_alagamentos()
+    if municipios_alerta:
+        logging.info(f"ALERTA DE ALAGAMENTOS: {len(municipios_alerta)} ocorrências identificadas")
+        for alerta in municipios_alerta:
+            logging.info(f"  - {alerta['municipio']}/{alerta['estado']}: {alerta['precipitacao']}mm em {alerta['data']}")
+    else:
+        logging.info("Nenhum alerta de alagamento identificado para os próximos dias")
     
     logging.info("Atualização de previsões concluída.")
 

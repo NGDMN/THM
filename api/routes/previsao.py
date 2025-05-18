@@ -1,9 +1,27 @@
 from flask import Blueprint, request, jsonify
 from ..models.chuvas import ChuvasModel
 from ..models.alagamentos import AlagamentosModel
+import json
+import psycopg2
+from ..config import DB_CONFIG
 
 # Criar blueprint para rotas de previsão
 previsao_bp = Blueprint('previsao', __name__)
+
+def get_db_connection():
+    """Cria uma conexão com o banco de dados"""
+    try:
+        conn = psycopg2.connect(
+            dbname=DB_CONFIG['dbname'],
+            user=DB_CONFIG['user'],
+            password=DB_CONFIG['password'],
+            host=DB_CONFIG['host'],
+            port=DB_CONFIG['port']
+        )
+        return conn
+    except Exception as e:
+        print(f"Erro ao conectar ao banco: {e}")
+        return None
 
 @previsao_bp.route('/alertas', methods=['GET'])
 def alertas_atuais():
@@ -22,16 +40,54 @@ def alertas_atuais():
     estado = request.args.get('estado', 'RJ')
     
     try:
-        # Simplificado para teste - normalmente usaria dados reais do modelo
-        # Simular dados diferentes para diferentes cidades/estados
+        # Primeiro, verificar se existem alertas registrados no banco
+        conn = get_db_connection()
+        
+        if conn:
+            cursor = conn.cursor()
+            # Buscar informações de alerta na tabela de configuração
+            cursor.execute("SELECT valor FROM configuracao_sistema WHERE chave = 'ALERTA_ALAGAMENTOS'")
+            result = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            
+            if result and result[0]:
+                # Converter dados JSON para lista de dicionários
+                alertas = json.loads(result[0])
+                
+                # Filtrar apenas alertas da cidade/estado solicitados, se houver
+                alertas_cidade = [alerta for alerta in alertas 
+                                 if alerta.get('municipio').lower() == cidade.lower() 
+                                 and alerta.get('estado') == estado]
+                
+                if alertas_cidade:
+                    # Existe alerta específico para esta cidade
+                    return jsonify({
+                        'nivel': 2,  # Nível alto de alerta
+                        'mensagem': f"Alerta de risco de alagamentos para {cidade}-{estado} nos próximos dias devido a chuvas intensas.",
+                        'data_atualizacao': alertas_cidade[0].get('data'),
+                        'regioes_afetadas': [f"{cidade} - {estado}"],
+                        'precipitacao_prevista': [f"{alerta.get('precipitacao')}mm em {alerta.get('data')}" for alerta in alertas_cidade]
+                    })
+                elif alertas:
+                    # Existem alertas para outras cidades
+                    regioes = [f"{alerta.get('municipio')} - {alerta.get('estado')}" for alerta in alertas]
+                    return jsonify({
+                        'nivel': 1,  # Nível de atenção
+                        'mensagem': "Alertas de risco de alagamentos em algumas regiões devido a chuvas intensas.",
+                        'data_atualizacao': alertas[0].get('data'),
+                        'regioes_afetadas': regioes
+                    })
+        
+        # Se não encontrou alertas no banco ou sem conexão com banco, retorna dados simulados por região
         if estado == 'RJ':
-            nivel = 1 
-            mensagem = 'Alerta de chuvas moderadas para as próximas 24h nas regiões sul e oeste.'
-            regioes = ['Zona Sul - RJ', 'Zona Oeste - RJ']
+            nivel = 0 
+            mensagem = 'Sem alertas de alagamento ativos. Previsão de chuvas leves nos próximos dias.'
+            regioes = []
         elif estado == 'SP':
-            nivel = 2
-            mensagem = 'Alerta de tempestades com risco de alagamentos nas próximas 48h.'
-            regioes = ['Zona Leste - SP', 'ABC Paulista']
+            nivel = 0
+            mensagem = 'Sem alertas de alagamento ativos. Tempo estável nos próximos dias.'
+            regioes = []
         else:
             nivel = 0
             mensagem = 'Sem alertas ativos para a região.'

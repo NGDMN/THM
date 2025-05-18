@@ -239,6 +239,40 @@ O sistema analisa a relação entre precipitação e ocorrência de alagamentos 
 2. Análise de séries temporais para padrões sazonais
 3. Cálculo de limiares críticos de precipitação por região
 
+## Sistema de Previsão e Alertas de Alagamentos
+
+O sistema de previsão e alertas de alagamentos é composto por:
+
+1. **Atualização Diária de Previsões**: Uma vez por dia, o sistema busca dados de previsão de chuva da API do Climatempo para os próximos 7 dias (dia atual + 6 dias) e atualiza o banco de dados.
+
+2. **Verificação de Alertas**: Durante a atualização, o sistema verifica se a quantidade de chuva prevista está abaixo ou acima do nível de alerta. Caso a previsão indique precipitação igual ou acima do limiar configurado (atualmente 30mm/dia), o sistema gera um alerta de risco de alagamento para o município.
+
+3. **Exibição de Alertas no Site**: O site consulta a API que, por sua vez, verifica no banco de dados se existem alertas ativos para a região solicitada. Se houver, exibe um aviso de alerta na página inicial.
+
+### Configuração e Execução
+
+Para configurar o sistema de atualização diária:
+
+1. Certifique-se de ter uma chave de API válida do Climatempo e configure-a no arquivo `.env` ou como variável de ambiente:
+   ```
+   API_CLIMATEMPO_KEY=sua_chave_aqui
+   ```
+
+2. Execute o script `scripts/agendar_atualizacao.bat` para agendar a execução diária no Windows Task Scheduler.
+
+3. Para executar a atualização manualmente, use:
+   ```
+   cd scripts
+   python update_previsao.py
+   ```
+
+### Parâmetros Configuráveis
+
+Os seguintes parâmetros podem ser ajustados no arquivo `scripts/update_previsao.py`:
+
+- `LIMIAR_ALERTA_CHUVA`: Quantidade de chuva (em mm/dia) que dispara um alerta de alagamento (padrão: 30mm)
+- `CIDADES`: Lista de cidades monitoradas com seus respectivos IDs na API do Climatempo
+
 ## Contribuição
 
 Para contribuir com o projeto:
