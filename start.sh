@@ -15,5 +15,7 @@ pip install werkzeug==2.0.3
 cd api
 pip install Flask==2.0.1 Flask-Cors==3.0.10 python-dotenv==0.19.0 gunicorn==20.1.0
 
-# Iniciar a API
-gunicorn app:app --bind 0.0.0.0:$PORT 
+# Iniciar a API usando o módulo api.app
+cd ..
+export PYTHONPATH=$PYTHONPATH:$(pwd)
+gunicorn api.app:app --bind 0.0.0.0:$PORT 

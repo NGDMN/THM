@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
-from routes.previsao import previsao_bp
-from routes.historico import historico_bp
+from .routes.previsao import previsao_bp
+from .routes.historico import historico_bp
 
 app = Flask(__name__)
 CORS(app)  # Habilitar CORS para todas as rotas

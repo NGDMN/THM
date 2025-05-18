@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
-from api.models.chuvas import ChuvasModel
-from api.models.alagamentos import AlagamentosModel
+from ..models.chuvas import ChuvasModel
+from ..models.alagamentos import AlagamentosModel
 import datetime
 
 # Criar blueprint para rotas de histórico

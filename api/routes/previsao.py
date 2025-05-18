@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
-from api.models.chuvas import ChuvasModel
-from api.models.alagamentos import AlagamentosModel
+from ..models.chuvas import ChuvasModel
+from ..models.alagamentos import AlagamentosModel
 
 # Criar blueprint para rotas de previsão
 previsao_bp = Blueprint('previsao', __name__)
