@@ -10,19 +10,38 @@ def alertas_atuais():
     """
     Endpoint para alertas de chuvas e alagamentos atuais
     
+    Query params:
+        cidade (str, opcional): Nome da cidade
+        estado (str, opcional): Sigla do estado (RJ ou SP)
+    
     Returns:
         JSON com dados de alertas
     """
+    # Obter parâmetros (opcionais)
+    cidade = request.args.get('cidade', 'Rio de Janeiro')
+    estado = request.args.get('estado', 'RJ')
+    
     try:
         # Simplificado para teste - normalmente usaria dados reais do modelo
+        # Simular dados diferentes para diferentes cidades/estados
+        if estado == 'RJ':
+            nivel = 1 
+            mensagem = 'Alerta de chuvas moderadas para as próximas 24h nas regiões sul e oeste.'
+            regioes = ['Zona Sul - RJ', 'Zona Oeste - RJ']
+        elif estado == 'SP':
+            nivel = 2
+            mensagem = 'Alerta de tempestades com risco de alagamentos nas próximas 48h.'
+            regioes = ['Zona Leste - SP', 'ABC Paulista']
+        else:
+            nivel = 0
+            mensagem = 'Sem alertas ativos para a região.'
+            regioes = []
+            
         return jsonify({
-            'nivel': 1,
-            'mensagem': 'Alerta de chuvas moderadas para as próximas 24h nas regiões sul e oeste.',
+            'nivel': nivel,
+            'mensagem': mensagem,
             'data_atualizacao': '2023-11-15T14:30:00',
-            'regioes_afetadas': [
-                'Zona Sul - RJ',
-                'Zona Oeste - RJ'
-            ]
+            'regioes_afetadas': regioes
         })
     except Exception as e:
         return jsonify({

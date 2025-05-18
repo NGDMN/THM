@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 # Carregar variáveis de ambiente do arquivo .env
 load_dotenv()
 
-# Verificar se deve usar dados simulados
-USE_MOCK_DATA = os.getenv('USE_MOCK_DATA', 'False').lower() == 'true'
+# Forçar o uso de dados simulados para evitar erros de conexão com o banco
+USE_MOCK_DATA = True
 
 # Configurações do banco de dados PostgreSQL
 DB_CONFIG = {

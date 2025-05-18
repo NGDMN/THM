@@ -2,6 +2,10 @@ import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
+// Cidade e estado padrão para todas as requisições
+const CIDADE_PADRAO = 'Rio de Janeiro';
+const ESTADO_PADRAO = 'RJ';
+
 // Obter dados de alerta atual
 export const getDadosAlerta = async () => {
   try {
@@ -16,7 +20,9 @@ export const getDadosAlerta = async () => {
 // Obter previsão de chuvas
 export const getPrevisaoChuvas = async (dias = 7) => {
   try {
-    const response = await axios.get(`${API_URL}/previsao/chuvas?dias=${dias}`);
+    const response = await axios.get(
+      `${API_URL}/previsao/chuvas?cidade=${CIDADE_PADRAO}&estado=${ESTADO_PADRAO}&dias=${dias}`
+    );
     return response.data;
   } catch (error) {
     console.error('Erro ao buscar previsão de chuvas:', error);
@@ -27,7 +33,9 @@ export const getPrevisaoChuvas = async (dias = 7) => {
 // Obter previsão de alagamentos
 export const getPrevisaoAlagamentos = async (dias = 7) => {
   try {
-    const response = await axios.get(`${API_URL}/previsao/alagamentos?dias=${dias}`);
+    const response = await axios.get(
+      `${API_URL}/previsao/alagamentos?cidade=${CIDADE_PADRAO}&estado=${ESTADO_PADRAO}&dias=${dias}`
+    );
     return response.data;
   } catch (error) {
     console.error('Erro ao buscar previsão de alagamentos:', error);
@@ -39,7 +47,7 @@ export const getPrevisaoAlagamentos = async (dias = 7) => {
 export const getHistoricoChuvas = async (inicio, fim) => {
   try {
     const response = await axios.get(
-      `${API_URL}/historico/chuvas?inicio=${inicio}&fim=${fim}`
+      `${API_URL}/historico/chuvas?cidade=${CIDADE_PADRAO}&estado=${ESTADO_PADRAO}&dataInicio=${inicio}&dataFim=${fim}`
     );
     return response.data;
   } catch (error) {
@@ -52,7 +60,7 @@ export const getHistoricoChuvas = async (inicio, fim) => {
 export const getHistoricoAlagamentos = async (inicio, fim) => {
   try {
     const response = await axios.get(
-      `${API_URL}/historico/alagamentos?inicio=${inicio}&fim=${fim}`
+      `${API_URL}/historico/alagamentos?cidade=${CIDADE_PADRAO}&estado=${ESTADO_PADRAO}&dataInicio=${inicio}&dataFim=${fim}`
     );
     return response.data;
   } catch (error) {
