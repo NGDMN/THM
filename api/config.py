@@ -7,16 +7,14 @@ load_dotenv()
 # Verificar se deve usar dados simulados
 USE_MOCK_DATA = os.getenv('USE_MOCK_DATA', 'False').lower() == 'true'
 
-# Configurações do banco de dados Oracle
+# Configurações do banco de dados PostgreSQL
 DB_CONFIG = {
-    'user': os.getenv('ORACLE_USER', 'ADMIN'),
-    'password': os.getenv('ORACLE_PASSWORD', ''),
-    'dsn': os.getenv('ORACLE_DSN', 'chuvasalagamentos_high'),
-    'encoding': 'UTF-8'
+    'dbname': os.getenv('PG_DBNAME', 'thm'),
+    'user': os.getenv('PG_USER', 'postgres'),
+    'password': os.getenv('PG_PASSWORD', ''),
+    'host': os.getenv('PG_HOST', 'localhost'),
+    'port': os.getenv('PG_PORT', '5432')
 }
-
-# Diretório do Oracle Wallet
-TNS_ADMIN = os.getenv('TNS_ADMIN', '')
 
 # Configuração do Flask
 DEBUG = os.getenv('FLASK_ENV', 'development') == 'development'

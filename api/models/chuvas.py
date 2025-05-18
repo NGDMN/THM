@@ -20,7 +20,7 @@ class ChuvasModel:
             list: Lista de dicionários com data e precipitação prevista
         """
         try:
-            # Query para obter previsões do banco de dados
+            # Query para obter previsões do banco de dados (adaptada para PostgreSQL)
             query = """
             SELECT 
                 municipio, 
@@ -30,7 +30,7 @@ class ChuvasModel:
                 chuvas_diarias 
             WHERE 
                 municipio = :cidade
-                AND data BETWEEN CURRENT_DATE AND CURRENT_DATE + 7
+                AND data BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days'
             ORDER BY 
                 data
             """
@@ -72,7 +72,7 @@ class ChuvasModel:
             list: Lista de dicionários com data e precipitação
         """
         try:
-            # Query para obter histórico do banco de dados
+            # Query para obter histórico do banco de dados (adaptada para PostgreSQL)
             query = """
             SELECT 
                 municipio, 

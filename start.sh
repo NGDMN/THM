@@ -11,17 +11,16 @@ pip install scikit-learn>=1.0.0
 pip install markupsafe
 pip install werkzeug==2.0.3
 
-# Instalar cx_Oracle (necessário para acessar o banco Oracle)
-# Usando --no-build-isolation para evitar problemas de compilação
-pip install cx_Oracle --no-build-isolation || echo "cx_Oracle não instalado. Usar modo simulação."
+# Instalar psycopg2 (necessário para acessar o banco PostgreSQL)
+pip install psycopg2-binary || echo "psycopg2 não instalado. Usar modo simulação."
 
 # Entrar na pasta da API e instalar as dependências do Flask com suas dependências
 cd api
 pip install Flask==2.0.1 Flask-Cors==3.0.10 python-dotenv==0.19.0 gunicorn==20.1.0
 
-# Configurar variáveis de ambiente para modo simulação caso não seja possível instalar cx_Oracle
-if ! python -c "import cx_Oracle" &> /dev/null; then
-    echo "cx_Oracle não disponível. Ativando modo de simulação."
+# Configurar variáveis de ambiente para modo simulação caso não seja possível instalar psycopg2
+if ! python -c "import psycopg2" &> /dev/null; then
+    echo "psycopg2 não disponível. Ativando modo de simulação."
     export USE_MOCK_DATA=True
 fi
 

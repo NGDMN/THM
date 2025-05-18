@@ -29,7 +29,7 @@ class AlagamentosModel:
                 chuvas_diarias 
             WHERE 
                 municipio = :cidade
-                AND data BETWEEN CURRENT_DATE AND CURRENT_DATE + 3
+                AND data BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '3 days'
             """
             
             params = {'cidade': cidade}
@@ -102,7 +102,7 @@ class AlagamentosModel:
             list: Lista de dicionários com informações de alagamentos
         """
         try:
-            # Query para obter histórico do banco de dados
+            # Query para obter histórico do banco de dados (adaptada para PostgreSQL)
             query = """
             SELECT 
                 municipio, 
