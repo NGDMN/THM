@@ -9,7 +9,7 @@ pip install scipy>=1.8.0
 pip install pandas>=1.4.0
 pip install scikit-learn>=1.0.0
 pip install markupsafe
-pip install werkzeug
+pip install werkzeug==2.0.3
 
 # Entrar na pasta da API e instalar as dependências do Flask com suas dependências
 cd api
