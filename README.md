@@ -5,10 +5,10 @@ Sistema completo para processamento de dados, análise e previsão de alagamento
 ## Visão Geral
 
 Este projeto:
-- Processa dados históricos de precipitação do INMET para RJ e SP
-- Analisa registros de alagamentos do S2iD
+- Processa dados históricos de precipitação para RJ e SP
+- Analisa registros de alagamentos 
 - Correlaciona chuvas com ocorrências de alagamentos
-- Armazena os dados processados em Oracle Database
+- Armazena os dados processados em PostgreSQL
 - Fornece API REST para acesso aos dados e previsões
 - Apresenta interface web interativa com visualizações e mapas
 
@@ -18,11 +18,11 @@ O sistema é composto por três componentes principais:
 
 1. **Backend Python de Processamento de Dados**
    - Scripts para processamento e análise de dados
-   - Conexão com banco de dados Oracle
+   - Conexão com banco de dados PostgreSQL
    - Geração de insights e correlações estatísticas
 
 2. **API REST**
-   - Intermediária entre o banco Oracle e o frontend
+   - Intermediária entre o banco de dados e o frontend
    - Endpoints para previsão e histórico
    - Suporte a modo simulado para desenvolvimento
 
@@ -34,7 +34,7 @@ O sistema é composto por três componentes principais:
 ## Estrutura de Diretórios
 
 ```
-sistema-alagamentos/
+thm/
 ├── api/                    # API REST em Flask
 │   ├── app.py              # Aplicação principal
 │   ├── config.py           # Configurações
@@ -48,32 +48,35 @@ sistema-alagamentos/
 │   ├── src/                # Código fonte
 │   │   ├── components/     # Componentes React
 │   │   ├── services/       # Comunicação com API
+│   │   ├── contexts/       # Contextos React
+│   │   ├── hooks/          # Hooks customizados
+│   │   ├── pages/          # Páginas da aplicação 
+│   │   ├── utils/          # Funções utilitárias
 │   │   └── App.js          # Componente principal
 │   └── package.json        # Dependências
 ├── scripts/                # Scripts de processamento
-│   ├── instalar_dependencias.py
-│   ├── script_principal.py
-│   └── executar_*.bat      # Scripts batch
-├── config/                 # Configurações Oracle
-│   ├── setup_oracle_connection.py
-│   └── sqlnet.ora
+│   ├── schema_pg.sql       # Esquema do banco PostgreSQL
+│   ├── import_data.py      # Importação de dados históricos
+│   ├── update_previsao.py  # Atualização de previsões
+│   ├── encontrar_relacao.py # Análise de correlação 
+│   ├── setup_db.bat        # Configuração do banco
+│   └── thm_executor.bat    # Script unificado
 ├── data/                   # Dados processados
-│   ├── alagamentos_com_precipitacao.csv
-│   └── previsoes_chuva.csv
+│   ├── graficos/           # Visualizações geradas
+│   └── amostras/           # Amostras de dados
 └── README.md               # Documentação
 ```
 
 ## Pré-requisitos
 
 ### Geral
-- Python 3.7+
+- Python 3.8+
 - Node.js 14+ e npm
 - Git
 
 ### Backend e API
-- Oracle Instant Client 23.8+
-- Oracle Wallet configurado
-- Acesso a um Oracle Database (nível gratuito é suficiente)
+- PostgreSQL 12+
+- Bibliotecas Python: psycopg2, Flask, pandas, scikit-learn
 
 ### Frontend
 - Navegador moderno com suporte a ES6+
@@ -82,51 +85,46 @@ sistema-alagamentos/
 
 ### 1. Configuração do Backend e API
 
-#### 1.1 Instalação de Dependências Python
+#### 1.1 Instalação do PostgreSQL
+
+1. Baixe e instale o PostgreSQL em [postgresql.org/download](https://www.postgresql.org/download/)
+2. Crie um banco de dados chamado "thm"
+3. Execute o script `scripts/setup_db.bat` para configurar o banco
+
+Ou use o script unificado:
+```bash
+# Executar o script unificado
+cd scripts
+thm_executor.bat
+# Selecione a opção 1 para configurar o banco
+```
+
+#### 1.2 Instalação de Dependências Python
 
 ```bash
 # Navegar até o diretório raiz
-cd sistema-alagamentos
+cd thm
 
 # Instalar dependências
-python scripts/instalar_dependencias.py
+pip install -r api/requirements.txt
 ```
 
-#### 1.2 Configuração do Oracle Database
-
-1. Crie uma conta na [Oracle Cloud](https://www.oracle.com/br/cloud/free/)
-2. Configure um Banco de Dados Autônomo
-3. Baixe o Oracle Wallet para seu diretório local
-4. Configure as credenciais:
+#### 1.3 Importação de Dados Históricos
 
 ```bash
-# Configurar conexão Oracle
-python config/setup_oracle_connection.py
+# Usar o script unificado
+cd scripts
+thm_executor.bat
+# Selecione a opção 2 para importar dados
 ```
 
-#### 1.3 Configuração da API
+#### 1.4 Análise de Relação Chuvas-Alagamentos
 
 ```bash
-# Navegar até o diretório da API
-cd api
-
-# Criar e ativar ambiente virtual
-python -m venv venv
-.\venv\Scripts\activate  # Windows
-
-# Instalar dependências
-pip install -r requirements.txt
-```
-
-Crie um arquivo `.env` na pasta `api/` com:
-
-```
-FLASK_APP=app.py
-FLASK_ENV=development
-ORACLE_USER=ADMIN
-ORACLE_PASSWORD=SuaSenhaAqui
-ORACLE_DSN=chuvasalagamentos_high
-TNS_ADMIN=C:\Users\SeuUsuario\OracleWallet
+# Usar o script unificado
+cd scripts
+thm_executor.bat
+# Selecione a opção 3 para analisar
 ```
 
 ### 2. Configuração do Frontend
@@ -141,26 +139,20 @@ npm install
 
 ## Executando o Sistema
 
-### Iniciar o Backend de Processamento
-
-```bash
-# Executar scripts de processamento
-python scripts/script_principal.py
-```
-
 ### Iniciar a API
 
 ```bash
-# Modo com Banco Oracle
-cd api
-.\venv\Scripts\activate
-flask run
+# Usar o script unificado
+cd scripts
+thm_executor.bat
+# Selecione a opção 5 (modo normal) ou 6 (modo simulação)
+```
 
-# OU Modo Simulação (sem Oracle)
-cd api
-.\venv\Scripts\activate
-set USE_MOCK_DATA=True
-flask run
+Ou para deploy:
+
+```bash
+# Executar diretamente com gunicorn
+gunicorn api.app:app --bind 0.0.0.0:$PORT
 ```
 
 ### Iniciar o Frontend
@@ -174,108 +166,85 @@ O aplicativo será aberto em http://localhost:3000
 
 ## Endpoints da API
 
-Todos os endpoints disponíveis:
-
 - `GET /api/previsao/chuvas?cidade={cidade}&estado={estado}`
 - `GET /api/previsao/alagamentos?cidade={cidade}&estado={estado}`
 - `GET /api/historico/chuvas?cidade={cidade}&estado={estado}&dataInicio={dataInicio}&dataFim={dataFim}`
 - `GET /api/historico/alagamentos?cidade={cidade}&estado={estado}&dataInicio={dataInicio}&dataFim={dataFim}`
-- `GET /api/historico/pontos/alagamentos?cidade={cidade}&estado={estado}`
+- `GET /api/pontos/alagamentos?cidade={cidade}&estado={estado}`
 
 ## Deploy
 
-### Deploy da API
+O projeto está configurado para deploy no Render.com, utilizando a seguinte configuração:
 
-A API Flask pode ser hospedada em:
-- Heroku
-- PythonAnywhere
-- Azure App Service
-- AWS Elastic Beanstalk
+1. **Configuração do banco de dados:**
+   - Banco PostgreSQL no Render ou em outro provedor
+   - Variáveis de ambiente para conexão
 
-### Deploy do Frontend
+2. **Deploy da API:**
+   - Build Command: `pip install -r api/requirements.txt`
+   - Start Command: `gunicorn api.app:app --bind 0.0.0.0:$PORT`
 
-O frontend React pode ser facilmente implantado no Vercel:
+3. **Variáveis de ambiente:**
+   - `PG_DBNAME`: Nome do banco PostgreSQL
+   - `PG_USER`: Usuário PostgreSQL
+   - `PG_PASSWORD`: Senha PostgreSQL
+   - `PG_HOST`: Endereço do servidor PostgreSQL
+   - `PG_PORT`: Porta PostgreSQL (padrão 5432)
+   - `USE_MOCK_DATA`: "True" para usar dados simulados
 
-```bash
-# Instalar Vercel CLI
-npm install -g vercel
+## Modo Simulação
 
-# Navegue até o diretório do frontend
-cd frontend/chuvas-alagamentos-app
+O sistema possui um modo de simulação para funcionar mesmo sem acesso ao banco de dados, útil para:
 
-# Fazer deploy
-vercel
-```
+1. Desenvolvimento e testes locais
+2. Deploy em ambientes sem acesso a banco de dados
+3. Demostração da aplicação
+
+Para ativar, defina a variável de ambiente `USE_MOCK_DATA=True`
 
 ## Banco de Dados
 
-O projeto utiliza três tabelas principais no Oracle Database:
+O projeto utiliza as seguintes tabelas no PostgreSQL:
 
 1. **chuvas_diarias**:
-   - `municipio VARCHAR2(100)`
-   - `data DATE`
-   - `precipitacao_diaria NUMBER`
+   - Armazena dados de precipitação por cidade/data
+   - Usado para previsões e análise histórica
 
 2. **alagamentos**:
-   - `municipio VARCHAR2(100)`
-   - `data DATE`
-   - `populacao NUMBER`
-   - `dh_mortos NUMBER`
+   - Registra ocorrências de alagamentos
+   - Inclui localização, gravidade e impactos
 
-3. **chuvas_alagamentos**:
-   - `municipio VARCHAR2(100)`
-   - `data DATE`
-   - `precipitacao_diaria NUMBER`
-   - `populacao NUMBER`
-   - `dh_mortos NUMBER`
+3. **parametros_alagamento**:
+   - Armazena resultados da análise de correlação
+   - Contém limiares e coeficientes por cidade
+
+## Atualização de Dados
+
+O sistema pode ser atualizado diariamente com novos dados:
+
+1. **Dados de previsão de chuva:**
+   - Use o script `update_previsao.py`
+   - Configure com chave API do Climatempo (opcional)
+   - Agende execução diária com agendador de tarefas
+
+2. **Novos registros de alagamentos:**
+   - Importe usando `import_data.py`
+   - Reanalise relações com `encontrar_relacao.py`
 
 ## Modelo Preditivo
 
-O sistema utiliza modelos estatísticos para prever probabilidades de alagamentos baseado em:
-1. Dados históricos de precipitação
-2. Ocorrências passadas de alagamentos
-3. Características geográficas das regiões
-4. Padrões sazonais
+O sistema analisa a relação entre precipitação e ocorrência de alagamentos usando:
 
-## Principais Funcionalidades do Frontend
+1. Regressão logística para probabilidade de alagamento
+2. Análise de séries temporais para padrões sazonais
+3. Cálculo de limiares críticos de precipitação por região
 
-1. **Dashboard Interativo**
-   - Visão geral dos dados de precipitação e risco de alagamentos
-   - Seleção de cidade e estado para análise específica
+## Contribuição
 
-2. **Mapa de Pontos de Alagamento**
-   - Visualização geográfica de pontos críticos
-   - Níveis de risco codificados por cores
+Para contribuir com o projeto:
 
-3. **Gráficos de Previsão**
-   - Previsão de precipitação para os próximos 7 dias
-   - Histórico de chuvas para análise
-
-4. **Análise de Risco**
-   - Indicadores de probabilidade de alagamento
-   - Recomendações baseadas nos níveis de risco
-
-## Solução de Problemas
-
-### Erros comuns de conexão Oracle:
-
-- **DPI-1047: Cannot locate Oracle Client**  
-  Verifique se o Oracle Instant Client está no PATH
-
-- **ORA-01017: invalid username/password**  
-  Verifique as credenciais no arquivo .env
-
-- **ORA-28759: failure to open file**  
-  Verifique a configuração do Oracle Wallet
-
-## Contribuições e Desenvolvimento
-
-1. Clone o repositório
-2. Crie um branch para sua feature (`git checkout -b feature/nova-funcionalidade`)
-3. Faça suas alterações
-4. Commit e push (`git push origin feature/nova-funcionalidade`)
-5. Crie um Pull Request
-
-## Licença
-
-Este projeto está licenciado sob a licença MIT. 
+1. Faça um fork do repositório
+2. Crie uma branch para sua feature (`git checkout -b feature/nova-funcionalidade`)
+3. Commit suas mudanças (`git commit -m 'Adiciona nova funcionalidade'`)
+4. Push para a branch (`git push origin feature/nova-funcionalidade`)
+5. Abra um Pull Request 
