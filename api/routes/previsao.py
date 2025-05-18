@@ -5,6 +5,31 @@ from ..models.alagamentos import AlagamentosModel
 # Criar blueprint para rotas de previsão
 previsao_bp = Blueprint('previsao', __name__)
 
+@previsao_bp.route('/alertas', methods=['GET'])
+def alertas_atuais():
+    """
+    Endpoint para alertas de chuvas e alagamentos atuais
+    
+    Returns:
+        JSON com dados de alertas
+    """
+    try:
+        # Simplificado para teste - normalmente usaria dados reais do modelo
+        return jsonify({
+            'nivel': 1,
+            'mensagem': 'Alerta de chuvas moderadas para as próximas 24h nas regiões sul e oeste.',
+            'data_atualizacao': '2023-11-15T14:30:00',
+            'regioes_afetadas': [
+                'Zona Sul - RJ',
+                'Zona Oeste - RJ'
+            ]
+        })
+    except Exception as e:
+        return jsonify({
+            'erro': 'Erro ao obter dados de alerta',
+            'mensagem': str(e)
+        }), 500
+
 @previsao_bp.route('/chuvas', methods=['GET'])
 def previsao_chuvas():
     """
