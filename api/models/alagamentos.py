@@ -1,7 +1,7 @@
 import pandas as pd
 import datetime
 import random
-from api.utils.db_utils import execute_query
+from ..utils.db_utils import execute_query
 
 class AlagamentosModel:
     """

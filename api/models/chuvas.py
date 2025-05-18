@@ -1,6 +1,6 @@
 import pandas as pd
 import datetime
-from api.utils.db_utils import execute_query
+from ..utils.db_utils import execute_query
 
 class ChuvasModel:
     """

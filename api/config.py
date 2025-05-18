@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 # Carregar variáveis de ambiente do arquivo .env
 load_dotenv()
 
+# Verificar se deve usar dados simulados
+USE_MOCK_DATA = os.getenv('USE_MOCK_DATA', 'False').lower() == 'true'
+
 # Configurações do banco de dados Oracle
 DB_CONFIG = {
     'user': os.getenv('ORACLE_USER', 'ADMIN'),
