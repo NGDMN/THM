@@ -3,11 +3,12 @@
 # Atualizar pip para a versão mais recente
 pip install --upgrade pip
 
-# Instalar numpy, scipy, pandas e scikit-learn com constraints
-pip install -c constraints.txt numpy==1.19.5
-pip install -c constraints.txt scipy==1.5.4
-pip install -c constraints.txt pandas==1.1.5
-pip install -c constraints.txt scikit-learn==0.24.2
+# Instalar pacotes com versões compatíveis com Python 3.11
+pip install numpy>=1.22.0
+pip install scipy>=1.8.0
+pip install pandas>=1.4.0
+pip install scikit-learn>=1.0.0
+pip install markupsafe
 
 # Entrar na pasta da API e instalar as dependências restantes
 cd api
