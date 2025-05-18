@@ -23,15 +23,18 @@ if %ERRORLEVEL% NEQ 0 (
 :: Solicitar senha do PostgreSQL
 set /p PG_PASSWORD=Digite a senha do usuario postgres: 
 
+:: Definir PGPASSWORD para autenticação
+set PGPASSWORD=%PG_PASSWORD%
+
 echo.
 echo Criando banco de dados %PG_DATABASE%...
 
 :: Verificar se o banco já existe
-psql -h %PG_HOST% -p %PG_PORT% -U %PG_USER% -w -c "SELECT 1 FROM pg_database WHERE datname='%PG_DATABASE%'" | findstr /r /c:"1 row" >nul
+psql -h %PG_HOST% -p %PG_PORT% -U %PG_USER% -c "SELECT 1 FROM pg_database WHERE datname='%PG_DATABASE%'" | findstr /r /c:"1 row" >nul
 if %ERRORLEVEL% EQU 0 (
     echo O banco de dados %PG_DATABASE% ja existe.
 ) else (
-    psql -h %PG_HOST% -p %PG_PORT% -U %PG_USER% -w -c "CREATE DATABASE %PG_DATABASE%;"
+    psql -h %PG_HOST% -p %PG_PORT% -U %PG_USER% -c "CREATE DATABASE %PG_DATABASE%;"
     if %ERRORLEVEL% NEQ 0 (
         echo ERRO: Falha ao criar o banco de dados.
         goto :EOF
@@ -77,5 +80,8 @@ echo 1. Importe dados historicos com: python scripts\import_data.py
 echo 2. Obtenha uma chave da API Climatempo e adicione-a no arquivo .env
 echo 3. Configure a atualizacao diaria com: python scripts\update_previsao.py
 echo.
+
+:: Limpar PGPASSWORD por segurança
+set PGPASSWORD=
 
 endlocal 

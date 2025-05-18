@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 # Carregar variáveis de ambiente do arquivo .env
 load_dotenv()
 
-# Forçar o uso de dados simulados para evitar erros de conexão com o banco
-USE_MOCK_DATA = True
+# Configuração para usar banco de dados real ao invés de dados simulados
+USE_MOCK_DATA = False
 
 # Configurações do banco de dados PostgreSQL
 DB_CONFIG = {
