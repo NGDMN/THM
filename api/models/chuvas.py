@@ -70,7 +70,7 @@ class ChuvasModel:
             FROM 
                 chuvas_diarias
             WHERE 
-                UPPER(municipio) = UPPER(:cidade)
+                UPPER(cidade) = UPPER(:cidade)
                 AND UPPER(estado) = UPPER(:estado)
                 AND data BETWEEN :data_inicio AND :data_fim
             ORDER BY data
@@ -78,7 +78,15 @@ class ChuvasModel:
             params = {"cidade": cidade, "estado": estado, "data_inicio": data_inicio, "data_fim": data_fim}
             result = execute_query(query, params)
             print(f"[LOG] Resultado: {result}")
-            return result
+            if result.empty:
+                return []
+            resultado = []
+            for _, row in result.iterrows():
+                resultado.append({
+                    'data': row['data'].strftime('%Y-%m-%d'),
+                    'precipitacao': float(row['precipitacao'])
+                })
+            return resultado
         except Exception as e:
             print(f"[LOG] Erro ao buscar histórico de chuvas: {e}")
             return [] 
