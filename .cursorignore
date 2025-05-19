@@ -1,0 +1,40 @@
+# Diretórios
+data/
+Chuvas/
+Alagamentos/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv
+node_modules/
+dist/
+build/
+
+# Arquivos de log
+*.log
+update_previsao.log
+update_previsao_risco.log
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos de IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Arquivos de cache
+.cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Arquivos de build e distribuição
+*.egg-info/
+*.egg 

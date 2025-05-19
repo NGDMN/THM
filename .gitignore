@@ -32,23 +32,12 @@ yarn-debug.log
 .pnp.js
 coverage/
 build/
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
 .cache/
 
 # Ambiente virtual Python
 venv/
 ENV/
 env/
-
-# Arquivos de configuração locais
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
 
 # Oracle Wallet
 *.zip
@@ -65,4 +54,10 @@ Wallet_*/
 .DS_Store
 Thumbs.db
 *.log
-logs/ 
+logs/
+
+# Arquivos de ambiente
+.env
+.env.local
+.env.*.local
+!.env.example 

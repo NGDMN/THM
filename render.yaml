@@ -1,3 +1,4 @@
+# render.yaml - Ajuste
 services:
   - type: web
     name: thm-api
@@ -15,4 +16,6 @@ services:
         value: "3.9.18"
       - key: PIP_ONLY_BINARY
         value: "numpy,scipy,pandas,scikit-learn"
-    healthCheckPath: / 
+      - key: BUILD_PACKAGES
+        value: "build-essential python3-dev"
+    healthCheckPath: /

@@ -1,23 +1,27 @@
 import os
-# Removendo a dependência do arquivo .env que está causando erro
-# from dotenv import load_dotenv
-# load_dotenv()
+from dotenv import load_dotenv
+
+# Define o caminho para o arquivo .env na raiz do projeto
+dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+
+# Carrega as variáveis do arquivo .env da raiz
+load_dotenv(dotenv_path=dotenv_path)
 
 # Configuração para usar banco de dados real ao invés de dados simulados
 USE_MOCK_DATA = False
 
 # Configurações do banco de dados PostgreSQL no Render
 DB_CONFIG = {
-    'dbname': 'thm_iy9l',
-    'user': 'thm_admin',
-    'password': 'fBfTMpHLfe2htlV9fe63mc0v9SmUTStS',
-    'host': 'dpg-d0l48cre5dus73c970sg-a.ohio-postgres.render.com',
-    'port': '5432'
+    'dbname': os.getenv('DB_NAME'),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'host': os.getenv('DB_HOST'),
+    'port': os.getenv('DB_PORT')
 }
 
 # Configuração da API do OpenWeatherMap
-OPENWEATHER_API_KEY = "50508f185d7a5337e4929c8816d2a46e"
-OPENWEATHER_API_NAME = "Projeto_THM"
+OPENWEATHER_API_KEY = os.getenv('OPENWEATHER_API_KEY')
+OPENWEATHER_API_NAME = os.getenv('OPENWEATHER_API_NAME')
 
 # Configuração do Flask
 DEBUG = os.environ.get('FLASK_ENV', 'development') == 'development'
