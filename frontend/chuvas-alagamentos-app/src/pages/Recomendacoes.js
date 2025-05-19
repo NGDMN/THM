@@ -1,5 +1,5 @@
 import React from 'react';
-import { Container, Typography, Box, Paper, List, ListItem, ListItemText } from '@mui/material';
+import { Container, Typography, Box, Paper, List, ListItem, ListItemText, Grid } from '@mui/material';
 
 const recomendacoes = [
   {
