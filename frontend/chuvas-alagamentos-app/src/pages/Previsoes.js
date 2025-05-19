@@ -136,129 +136,48 @@ const Previsoes = () => {
           <Tab label="Alagamentos" />
         </Tabs>
       </Box>
-      {tab === 0 && (
-        <Box>
-          <Typography variant="h5" gutterBottom>
-            Previsão de Chuvas
-          </Typography>
-          {chuvas && chuvas.length > 0 ? (
-            <Grid container spacing={2}>
-              {chuvas.map((previsao, index) => (
-                <Grid item xs={12} sm={6} md={4} key={index}>
-                  <Paper 
-                    sx={{ 
-                      p: 2, 
-                      display: 'flex', 
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      bgcolor: previsao.precipitacao >= 30 ? 'error.light' : 
-                              previsao.precipitacao >= 15 ? 'warning.light' : 'success.light',
-                    }}
-                  >
-                    <Typography variant="h6">{formatarData(previsao.data)}</Typography>
-                    <Box 
-                      sx={{ 
-                        mt: 2, 
-                        display: 'flex', 
-                        flexDirection: 'column',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <Typography variant="h4" color="text.secondary">
-                        {previsao.precipitacao} mm
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                        {previsao.precipitacao >= 30 ? 'Risco de alagamento' : 
-                        previsao.precipitacao >= 15 ? 'Chuva moderada' : 'Chuva leve/sem chuva'}
-                      </Typography>
-                    </Box>
-                  </Paper>
-                </Grid>
-              ))}
-            </Grid>
-          ) : (
-            <Alert 
-              severity="info"
-            >
-              Nenhuma previsão disponível para o período selecionado
-            </Alert>
-          )}
-        </Box>
-      )}
-      {tab === 1 && (
-        <Box>
-          <Typography variant="h5" gutterBottom>
-            Previsão de Alagamentos
-          </Typography>
-          {alagamentos ? (
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Paper sx={{ 
-                  p: 3, 
-                  bgcolor: alagamentos.nivelRisco === 'alto' ? 'error.light' : 
-                          alagamentos.nivelRisco === 'médio' ? 'warning.light' : 'success.light',
+      {chuvas && chuvas.length > 0 ? (
+        <Grid container spacing={2}>
+          {chuvas.map((previsao, index) => (
+            <Grid item xs={12} sm={6} md={4} key={index}>
+              <Paper 
+                sx={{ 
+                  p: 2, 
                   display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center' 
-                }}>
-                  <Typography variant="h6" gutterBottom>
-                    Nível de risco: {alagamentos.nivelRisco.toUpperCase()}
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  bgcolor: previsao.precipitacao >= 30 ? 'error.light' : previsao.precipitacao >= 15 ? 'warning.light' : 'success.light',
+                }}
+              >
+                <Typography variant="h6">{formatarData(previsao.data)}</Typography>
+                <Box 
+                  sx={{ 
+                    mt: 2, 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'center'
+                  }}
+                >
+                  <Typography variant="h4" color="text.secondary">
+                    {previsao.precipitacao} mm
                   </Typography>
-                  <Typography variant="body1" gutterBottom>
-                    Probabilidade de alagamentos: {(alagamentos.probabilidade * 100).toFixed(0)}%
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    {previsao.precipitacao >= 30 ? 'Risco de alagamento' : previsao.precipitacao >= 15 ? 'Chuva moderada' : 'Chuva leve/sem chuva'}
                   </Typography>
-                  {(alagamentos.nivelRisco === 'alto' || alagamentos.nivelRisco === 'médio') && (
-                    <Box sx={{ mt: 2 }}>
-                      <Button
-                        variant="contained"
-                        color="secondary"
-                        onClick={() => navigate('/recomendacoes')}
-                      >
-                        Ver Recomendações
-                      </Button>
-                    </Box>
+                  {previsao.precipitacao >= 30 && (
+                    <Alert severity="error" sx={{ mt: 2 }}>
+                      Atenção: Risco de alagamento neste dia!
+                    </Alert>
                   )}
-                </Paper>
-              </Grid>
-              {alagamentos.areasAfetadas && alagamentos.areasAfetadas.length > 0 && (
-                <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3 }}>
-                    <Typography variant="h6" gutterBottom>
-                      Áreas com histórico de alagamentos
-                    </Typography>
-                    <ul>
-                      {alagamentos.areasAfetadas.map((area, index) => (
-                        <li key={index}>
-                          <Typography variant="body1">{area}</Typography>
-                        </li>
-                      ))}
-                    </ul>
-                  </Paper>
-                </Grid>
-              )}
-              <Grid item xs={12} md={alagamentos.areasAfetadas && alagamentos.areasAfetadas.length > 0 ? 6 : 12}>
-                <Paper sx={{ p: 3 }}>
-                  <Typography variant="h6" gutterBottom>
-                    Recomendações
-                  </Typography>
-                  <ul>
-                    {alagamentos.recomendacoes.map((recomendacao, index) => (
-                      <li key={index}>
-                        <Typography variant="body1">{recomendacao}</Typography>
-                      </li>
-                    ))}
-                  </ul>
-                </Paper>
-              </Grid>
+                </Box>
+              </Paper>
             </Grid>
-          ) : (
-            <Alert 
-              severity="info"
-            >
-              Nenhuma previsão disponível para o período selecionado
-            </Alert>
-          )}
-        </Box>
+          ))}
+        </Grid>
+      ) : (
+        <Alert severity="info">
+          Nenhuma previsão disponível para o período selecionado
+        </Alert>
       )}
     </Container>
   );

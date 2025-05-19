@@ -142,16 +142,9 @@ function App() {
       <CssBaseline />
       <AlertaProvider>
         <Router>
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: 'column',
-            minHeight: '100vh'
-          }}>
+          <div className="App">
             <Header />
-            <Box component="main" sx={{ 
-              flexGrow: 1,
-              py: 2
-            }}>
+            <div className="App-content">
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/previsoes" element={<Previsoes />} />
@@ -159,9 +152,9 @@ function App() {
                 <Route path="/recomendacoes" element={<Recomendacoes />} />
                 <Route path="*" element={<h1>Página não encontrada!</h1>} />
               </Routes>
-            </Box>
+            </div>
             <Footer />
-          </Box>
+          </div>
         </Router>
       </AlertaProvider>
     </ThemeProvider>

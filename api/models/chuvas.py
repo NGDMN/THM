@@ -20,95 +20,70 @@ class ChuvasModel:
             list: Lista de dicionários com data e precipitação prevista
         """
         try:
-            # Query para obter previsões do banco de dados
+            print(f"[LOG] Buscando previsões para cidade={cidade}, estado={estado}")
+            # Query para obter previsões da tabela correta
             query = """
             SELECT 
-                municipio, 
                 data, 
-                precipitacao_diaria 
+                precipitacao 
             FROM 
-                chuvas_diarias 
+                previsoes 
             WHERE 
-                municipio = :cidade
+                cidade = :cidade
+                AND estado = :estado
                 AND data BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days'
-            ORDER BY 
-                data
+            ORDER BY data
             """
-            
-            params = {'cidade': cidade}
-            df = execute_query(query, params)
-            
-            # Se não houver dados, retornar lista vazia
-            if df.empty:
+            print(f"[LOG] Query: {query}")
+            params = {"cidade": cidade, "estado": estado}
+            print(f"[LOG] Params: {params}")
+            result = execute_query(query, params)
+            print(f"[LOG] Resultado: {result}")
+            if result.empty:
                 return []
-            
-            # Converter para formato esperado pela API
             resultado = []
-            for _, row in df.iterrows():
+            for _, row in result.iterrows():
                 resultado.append({
                     'data': row['data'].strftime('%Y-%m-%d'),
-                    'precipitacao': float(row['precipitacao_diaria'])
+                    'precipitacao': float(row['precipitacao'])
                 })
-            
             return resultado
-            
         except Exception as e:
-            print(f"Erro ao obter previsão de chuvas: {str(e)}")
+            print(f"[LOG] Erro ao buscar previsões: {e}")
             return []
     
     @staticmethod
     def get_historico_chuvas(cidade, estado, data_inicio, data_fim):
         """
-        Obtém dados históricos de chuvas para o período especificado
-        
+        Obtém histórico de chuvas para o período informado
         Args:
             cidade (str): Nome da cidade
-            estado (str): Sigla do estado
-            data_inicio (str): Data inicial no formato YYYY-MM-DD
-            data_fim (str): Data final no formato YYYY-MM-DD
-            
+            estado (str): Sigla do estado (RJ ou SP)
+            data_inicio (str): Data inicial (YYYY-MM-DD)
+            data_fim (str): Data final (YYYY-MM-DD)
         Returns:
             list: Lista de dicionários com data e precipitação
         """
         try:
-            # Query para obter histórico do banco de dados
+            print(f"[LOG] Buscando histórico de chuvas para cidade={cidade}, estado={estado}, de {data_inicio} até {data_fim}")
             query = """
             SELECT 
-                municipio, 
                 data, 
-                precipitacao_diaria 
+                precipitacao_diaria as precipitacao
             FROM 
-                chuvas_diarias 
+                chuvas_diarias
             WHERE 
                 municipio = :cidade
-                AND data BETWEEN TO_DATE(:data_inicio, 'YYYY-MM-DD') 
-                            AND TO_DATE(:data_fim, 'YYYY-MM-DD')
-            ORDER BY 
-                data
+                AND estado = :estado
+                AND data BETWEEN :data_inicio AND :data_fim
+            ORDER BY data
             """
-            
-            params = {
-                'cidade': cidade,
-                'data_inicio': data_inicio,
-                'data_fim': data_fim
-            }
-            
-            df = execute_query(query, params)
-            
-            # Se não houver dados, retornar lista vazia
-            if df.empty:
-                return []
-            
-            # Converter para formato esperado pela API
-            resultado = []
-            for _, row in df.iterrows():
-                resultado.append({
-                    'data': row['data'].strftime('%Y-%m-%d'),
-                    'precipitacao': float(row['precipitacao_diaria'])
-                })
-            
-            return resultado
-            
+            print(f"[LOG] Query: {query}")
+            params = {"cidade": cidade, "estado": estado, "data_inicio": data_inicio, "data_fim": data_fim}
+            print(f"[LOG] Params: {params}")
+            result = execute_query(query, params)
+            print(f"[LOG] Resultado: {result}")
+            return result
         except Exception as e:
-            print(f"Erro ao obter histórico de chuvas: {str(e)}")
+            print(f"[LOG] Erro ao buscar histórico de chuvas: {e}")
             return [] 

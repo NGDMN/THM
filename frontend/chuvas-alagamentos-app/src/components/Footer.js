@@ -15,10 +15,10 @@ const Footer = () => {
       }}
     >
       <Container maxWidth="lg">
-        <Typography variant="body1" align="center">
+        <Typography variant="body1" align="center" sx={{ color: '#F5F9FC' }}>
           Sistema de Previsão de Alagamentos RJ/SP - © {new Date().getFullYear()}
         </Typography>
-        <Typography variant="body2" align="center">
+        <Typography variant="body2" align="center" sx={{ color: '#F5F9FC' }}>
           Desenvolvido por Goodman Solution Experts
         </Typography>
       </Container>
