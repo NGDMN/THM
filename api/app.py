@@ -33,6 +33,23 @@ def index():
         ]
     }
 
+# Endpoint temporário para forçar ingestão de previsões
+@app.route('/admin/atualizar-previsoes', methods=['POST', 'GET'])
+def admin_atualizar_previsoes():
+    try:
+        from api.services.openweather_service import OpenWeatherService
+        resultado = OpenWeatherService.atualizar_previsoes_todas_cidades()
+        return {
+            'status': 'ok',
+            'mensagem': 'Previsões atualizadas com sucesso!',
+            'resultado': resultado
+        }, 200
+    except Exception as e:
+        return {
+            'status': 'erro',
+            'mensagem': str(e)
+        }, 500
+
 if __name__ == '__main__':
     print(f"Iniciando servidor na porta {PORT}...")
     app.run(debug=DEBUG, port=PORT, host='0.0.0.0') 
