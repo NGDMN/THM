@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://thm-api.onrender.com/api';
+const API_URL = 'https://thm-pg0z.onrender.com';
 
 // Cidade e estado padrão para todas as requisições
 const CIDADE_PADRAO = 'Rio de Janeiro';

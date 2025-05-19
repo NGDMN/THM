@@ -2,7 +2,7 @@ import axios from 'axios';
 import { mockPrevisaoChuvas, mockPontosAlagamento, mockPrevisaoAlagamentos } from './mockData';
 
 // Definir a URL base da API
-const API_URL = 'https://thm-api.onrender.com/api';
+const API_URL = 'https://thm-pg0z.onrender.com';
 
 // Flag para usar dados mock (desenvolvimento) ou API real (produção)
 const USE_MOCK_DATA = false;

@@ -67,16 +67,6 @@ const Home = () => {
             </Typography>
           </Paper>
         </Grid>
-        <Grid item xs={12} sm={6}>
-          <Paper sx={{ p: 3, height: '100%', cursor: 'pointer' }} onClick={() => navigate('/mapa')}>
-            <Typography variant="h5" component="h2" gutterBottom>
-              Mapa de Ocorrências
-            </Typography>
-            <Typography>
-              Visualize no mapa as ocorrências de alagamentos e precipitações em tempo real.
-            </Typography>
-          </Paper>
-        </Grid>
       </Grid>
     </Container>
   );
