@@ -130,12 +130,6 @@ const Previsoes = () => {
           </Select>
         </FormControl>
       </Box>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={tab} onChange={handleChangeTab}>
-          <Tab label="Chuvas" />
-          <Tab label="Alagamentos" />
-        </Tabs>
-      </Box>
       {chuvas && chuvas.length > 0 ? (
         <Grid container spacing={2}>
           {chuvas.map((previsao, index) => (
@@ -149,35 +143,21 @@ const Previsoes = () => {
                   bgcolor: previsao.precipitacao >= 30 ? 'error.light' : previsao.precipitacao >= 15 ? 'warning.light' : 'success.light',
                 }}
               >
-                <Typography variant="h6">{formatarData(previsao.data)}</Typography>
-                <Box 
-                  sx={{ 
-                    mt: 2, 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    alignItems: 'center'
-                  }}
-                >
-                  <Typography variant="h4" color="text.secondary">
-                    {previsao.precipitacao} mm
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                    {previsao.precipitacao >= 30 ? 'Risco de alagamento' : previsao.precipitacao >= 15 ? 'Chuva moderada' : 'Chuva leve/sem chuva'}
-                  </Typography>
-                  {previsao.precipitacao >= 30 && (
-                    <Alert severity="error" sx={{ mt: 2 }}>
-                      Atenção: Risco de alagamento neste dia!
-                    </Alert>
-                  )}
-                </Box>
+                <Typography variant="h6">{previsao.data}</Typography>
+                <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
+                  {previsao.precipitacao} mm
+                </Typography>
+                {previsao.precipitacao >= 30 && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                    Risco de alagamento!
+                  </Alert>
+                )}
               </Paper>
             </Grid>
           ))}
         </Grid>
       ) : (
-        <Alert severity="info">
-          Nenhuma previsão disponível para o período selecionado
-        </Alert>
+        <Alert severity="info">Nenhuma previsão disponível para o período selecionado</Alert>
       )}
     </Container>
   );

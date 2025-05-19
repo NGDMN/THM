@@ -20,8 +20,7 @@ class ChuvasModel:
             list: Lista de dicionários com data e precipitação prevista
         """
         try:
-            print(f"[LOG] Buscando previsões para cidade={cidade}, estado={estado}")
-            # Query para obter previsões da tabela correta
+            print(f"[LOG] Parâmetros recebidos: cidade={cidade}, estado={estado}")
             query = """
             SELECT 
                 data, 
@@ -29,14 +28,12 @@ class ChuvasModel:
             FROM 
                 previsoes 
             WHERE 
-                cidade = :cidade
-                AND estado = :estado
+                UPPER(cidade) = UPPER(:cidade)
+                AND UPPER(estado) = UPPER(:estado)
                 AND data BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days'
             ORDER BY data
             """
-            print(f"[LOG] Query: {query}")
             params = {"cidade": cidade, "estado": estado}
-            print(f"[LOG] Params: {params}")
             result = execute_query(query, params)
             print(f"[LOG] Resultado: {result}")
             if result.empty:
@@ -65,7 +62,7 @@ class ChuvasModel:
             list: Lista de dicionários com data e precipitação
         """
         try:
-            print(f"[LOG] Buscando histórico de chuvas para cidade={cidade}, estado={estado}, de {data_inicio} até {data_fim}")
+            print(f"[LOG] Parâmetros recebidos: cidade={cidade}, estado={estado}, data_inicio={data_inicio}, data_fim={data_fim}")
             query = """
             SELECT 
                 data, 
@@ -73,14 +70,12 @@ class ChuvasModel:
             FROM 
                 chuvas_diarias
             WHERE 
-                municipio = :cidade
-                AND estado = :estado
+                UPPER(municipio) = UPPER(:cidade)
+                AND UPPER(estado) = UPPER(:estado)
                 AND data BETWEEN :data_inicio AND :data_fim
             ORDER BY data
             """
-            print(f"[LOG] Query: {query}")
             params = {"cidade": cidade, "estado": estado, "data_inicio": data_inicio, "data_fim": data_fim}
-            print(f"[LOG] Params: {params}")
             result = execute_query(query, params)
             print(f"[LOG] Resultado: {result}")
             return result

@@ -1,8 +1,13 @@
-.App {
-  text-align: center;
+body, #root, .App {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.App {
+  text-align: center;
   font-family: 'Neue Haas Grotesk', Arial, sans-serif;
 }
 
@@ -18,15 +23,15 @@
 }
 
 .App-header {
-  background-color: #1B4F72;
-  padding: 1.5rem;
-  color: #F5F9FC;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   z-index: 1000;
+  background-color: #1B4F72;
+  color: #F5F9FC;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  padding: 1.5rem;
 }
 
 .App-header h1 {
@@ -43,14 +48,12 @@
 
 .App-content {
   flex: 1;
-  padding: 2rem;
+  padding: 2rem 1rem;
   background-color: #F5F9FC;
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 90px auto 70px auto;
   width: 100%;
   box-sizing: border-box;
-  margin-top: 90px; /* altura do header */
-  margin-bottom: 70px; /* altura do footer */
   min-height: calc(100vh - 160px);
   overflow-y: auto;
 }
@@ -111,16 +114,16 @@
 }
 
 .App-footer {
-  background-color: #1B4F72;
-  color: #F5F9FC;
-  padding: 1rem;
-  font-size: 0.9rem;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
   z-index: 1000;
+  background-color: #1B4F72;
+  color: #F5F9FC;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+  padding: 1rem;
+  font-size: 0.9rem;
   text-align: center;
 }
 
