@@ -6,24 +6,21 @@ const Header = () => {
   const navigate = useNavigate();
 
   return (
-    <AppBar position="static" className="App-header">
+    <AppBar position="fixed" className="App-header">
       <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: '#F5F9FC' }}>
+        <Typography variant="h6" component="div" style={{ flexGrow: 1 }}>
           Sistema de Previsão de Alagamentos RJ/SP
         </Typography>
         <Box>
           <Button color="inherit" onClick={() => navigate('/')}
-            sx={{ color: '#F5F9FC' }}
           >
             Início
           </Button>
           <Button color="inherit" onClick={() => navigate('/previsoes')}
-            sx={{ color: '#F5F9FC' }}
           >
             Previsões
           </Button>
           <Button color="inherit" onClick={() => navigate('/historico')}
-            sx={{ color: '#F5F9FC' }}
           >
             Histórico
           </Button>

@@ -6,13 +6,6 @@ const Footer = () => {
     <Box
       component="footer"
       className="App-footer"
-      sx={{
-        py: 3,
-        px: 2,
-        mt: 'auto',
-        backgroundColor: 'primary.main',
-        color: '#F5F9FC'
-      }}
     >
       <Container maxWidth="lg">
         <Typography variant="body1" align="center" sx={{ color: '#F5F9FC' }}>
