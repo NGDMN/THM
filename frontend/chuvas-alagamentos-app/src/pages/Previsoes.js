@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Box, Grid, Paper, Alert, CircularProgress, Tabs, Tab, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import { Container, Typography, Box, Grid, Paper, Alert, CircularProgress, Tabs, Tab, MenuItem, Select, FormControl, InputLabel, Button } from '@mui/material';
 import { getPrevisaoChuvas, getPrevisaoAlagamentos } from '../services/alertaService';
 import { useNavigate } from 'react-router-dom';
 
@@ -79,7 +79,12 @@ const Previsoes = () => {
   if (error) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Alert severity="error">{error}</Alert>
+        <Alert 
+          severity="error" 
+          sx={{ mb: 3 }}
+        >
+          {error}
+        </Alert>
       </Container>
     );
   }
@@ -92,7 +97,7 @@ const Previsoes = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
-      <Typography variant="h4" component="h1" gutterBottom sx={{ color: '#1B4F72', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif', fontWeight: 700, fontSize: '2.25rem', lineHeight: 1.2 }}>
+      <Typography variant="h4" component="h1" gutterBottom>
         Previsões para {cidade} - {estado}
       </Typography>
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
@@ -103,7 +108,7 @@ const Previsoes = () => {
             value={estado}
             label="Estado"
             onChange={handleEstadoChange}
-            sx={{ background: '#F5F9FC', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif' }}
+            sx={{ background: 'background.default' }}
           >
             {estados.map((est) => (
               <MenuItem key={est.sigla} value={est.sigla}>{est.nome}</MenuItem>
@@ -117,7 +122,7 @@ const Previsoes = () => {
             value={cidade}
             label="Cidade"
             onChange={handleCidadeChange}
-            sx={{ background: '#F5F9FC', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif' }}
+            sx={{ background: 'background.default' }}
           >
             {cidades[estado].map((cid) => (
               <MenuItem key={cid} value={cid}>{cid}</MenuItem>
@@ -133,7 +138,7 @@ const Previsoes = () => {
       </Box>
       {tab === 0 && (
         <Box>
-          <Typography variant="h5" gutterBottom sx={{ color: '#1B4F72', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif', fontWeight: 600 }}>
+          <Typography variant="h5" gutterBottom>
             Previsão de Chuvas
           </Typography>
           {chuvas && chuvas.length > 0 ? (
@@ -146,9 +151,8 @@ const Previsoes = () => {
                       display: 'flex', 
                       flexDirection: 'column',
                       alignItems: 'center',
-                      bgcolor: previsao.precipitacao >= 30 ? '#ffebee' : 
-                              previsao.precipitacao >= 15 ? '#fff8e1' : '#e8f5e9',
-                      fontFamily: 'Neue Haas Grotesk, Arial, sans-serif'
+                      bgcolor: previsao.precipitacao >= 30 ? 'error.light' : 
+                              previsao.precipitacao >= 15 ? 'warning.light' : 'success.light',
                     }}
                   >
                     <Typography variant="h6">{formatarData(previsao.data)}</Typography>
@@ -173,23 +177,30 @@ const Previsoes = () => {
               ))}
             </Grid>
           ) : (
-            <Alert severity="info">Nenhum dado de previsão disponível</Alert>
+            <Alert 
+              severity="info"
+            >
+              Nenhuma previsão disponível para o período selecionado
+            </Alert>
           )}
         </Box>
       )}
       {tab === 1 && (
         <Box>
-          <Typography variant="h5" gutterBottom sx={{ color: '#1B4F72', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif', fontWeight: 600 }}>
+          <Typography variant="h5" gutterBottom>
             Previsão de Alagamentos
           </Typography>
           {alagamentos ? (
             <Grid container spacing={3}>
               <Grid item xs={12}>
-                <Paper sx={{ p: 3, bgcolor: 
-                  alagamentos.nivelRisco === 'alto' ? '#ffebee' : 
-                  alagamentos.nivelRisco === 'médio' ? '#fff8e1' : '#e8f5e9',
-                  fontFamily: 'Neue Haas Grotesk, Arial, sans-serif',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <Paper sx={{ 
+                  p: 3, 
+                  bgcolor: alagamentos.nivelRisco === 'alto' ? 'error.light' : 
+                          alagamentos.nivelRisco === 'médio' ? 'warning.light' : 'success.light',
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center' 
+                }}>
                   <Typography variant="h6" gutterBottom>
                     Nível de risco: {alagamentos.nivelRisco.toUpperCase()}
                   </Typography>
@@ -198,31 +209,20 @@ const Previsoes = () => {
                   </Typography>
                   {(alagamentos.nivelRisco === 'alto' || alagamentos.nivelRisco === 'médio') && (
                     <Box sx={{ mt: 2 }}>
-                      <button
-                        style={{
-                          background: '#CB6D51',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: 6,
-                          padding: '0.75rem 1.5rem',
-                          fontWeight: 700,
-                          fontFamily: 'Neue Haas Grotesk, Arial, sans-serif',
-                          fontSize: '1rem',
-                          cursor: 'pointer',
-                          boxShadow: '0 2px 8px rgba(203,109,81,0.08)',
-                          transition: 'background 0.2s',
-                        }}
+                      <Button
+                        variant="contained"
+                        color="secondary"
                         onClick={() => navigate('/recomendacoes')}
                       >
                         Ver Recomendações
-                      </button>
+                      </Button>
                     </Box>
                   )}
                 </Paper>
               </Grid>
               {alagamentos.areasAfetadas && alagamentos.areasAfetadas.length > 0 && (
                 <Grid item xs={12} md={6}>
-                  <Paper sx={{ p: 3, fontFamily: 'Neue Haas Grotesk, Arial, sans-serif' }}>
+                  <Paper sx={{ p: 3 }}>
                     <Typography variant="h6" gutterBottom>
                       Áreas com histórico de alagamentos
                     </Typography>
@@ -237,7 +237,7 @@ const Previsoes = () => {
                 </Grid>
               )}
               <Grid item xs={12} md={alagamentos.areasAfetadas && alagamentos.areasAfetadas.length > 0 ? 6 : 12}>
-                <Paper sx={{ p: 3, fontFamily: 'Neue Haas Grotesk, Arial, sans-serif' }}>
+                <Paper sx={{ p: 3 }}>
                   <Typography variant="h6" gutterBottom>
                     Recomendações
                   </Typography>
@@ -252,7 +252,11 @@ const Previsoes = () => {
               </Grid>
             </Grid>
           ) : (
-            <Alert severity="info">Nenhum dado de previsão disponível</Alert>
+            <Alert 
+              severity="info"
+            >
+              Nenhuma previsão disponível para o período selecionado
+            </Alert>
           )}
         </Box>
       )}

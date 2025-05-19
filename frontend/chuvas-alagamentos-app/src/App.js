@@ -21,21 +21,118 @@ import { AlertaProvider } from './contexts/AlertaContext';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#0277bd', // Azul escuro
+      main: '#1B4F72', // Azul escuro
     },
     secondary: {
-      main: '#26a69a', // Verde água
+      main: '#CB6D51', // Laranja
     },
     background: {
-      default: '#f5f5f5', // Cinza claro para o fundo
+      default: '#F5F9FC', // Cinza claro para o fundo
+    },
+    error: {
+      main: '#d32f2f', // Vermelho para alertas de erro
+      light: '#ffebee', // Vermelho claro para fundo
+    },
+    warning: {
+      main: '#ed6c02', // Laranja para alertas de aviso
+      light: '#fff8e1', // Laranja claro para fundo
+    },
+    info: {
+      main: '#0288d1', // Azul para alertas de informação
+      light: '#e3f2fd', // Azul claro para fundo
+    },
+    success: {
+      main: '#2e7d32', // Verde para alertas de sucesso
+      light: '#e8f5e9', // Verde claro para fundo
     },
   },
   typography: {
     fontFamily: [
-      'Roboto',
+      'Neue Haas Grotesk',
       'Arial',
       'sans-serif',
     ].join(','),
+    h1: {
+      fontWeight: 700,
+      fontSize: '3rem',
+      lineHeight: 1.2,
+      color: '#1B4F72',
+    },
+    h2: {
+      fontWeight: 600,
+      fontSize: '2.25rem',
+      lineHeight: 1.2,
+      color: '#1B4F72',
+    },
+    h3: {
+      fontWeight: 600,
+      fontSize: '1.75rem',
+      lineHeight: 1.2,
+      color: '#1B4F72',
+    },
+    h4: {
+      fontWeight: 600,
+      fontSize: '1.5rem',
+      lineHeight: 1.2,
+      color: '#1B4F72',
+    },
+    h5: {
+      fontWeight: 600,
+      fontSize: '1.25rem',
+      lineHeight: 1.2,
+      color: '#1B4F72',
+    },
+    h6: {
+      fontWeight: 600,
+      fontSize: '1rem',
+      lineHeight: 1.2,
+      color: '#1B4F72',
+    },
+    body1: {
+      fontSize: '1rem',
+      lineHeight: 1.5,
+      color: '#1B4F72',
+    },
+    body2: {
+      fontSize: '0.875rem',
+      lineHeight: 1.5,
+      color: '#1B4F72',
+    },
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 6,
+          textTransform: 'none',
+          fontWeight: 600,
+          padding: '0.75rem 1.5rem',
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#1B4F72',
+        },
+      },
+    },
+    MuiAlert: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+        },
+      },
+    },
   },
 });
 

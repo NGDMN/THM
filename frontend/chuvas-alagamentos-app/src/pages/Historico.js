@@ -96,10 +96,10 @@ const Historico = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
-      <Typography variant="h4" component="h1" gutterBottom sx={{ color: '#1B4F72', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif', fontWeight: 700, fontSize: '2.25rem', lineHeight: 1.2 }}>
+      <Typography variant="h4" component="h1" gutterBottom>
         Histórico
       </Typography>
-      <Box sx={{ mb: 2, background: '#F5F9FC', borderRadius: 2, p: 2, color: '#1B4F72', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif', fontSize: '1rem' }}>
+      <Box sx={{ mb: 2, background: 'background.default', borderRadius: 2, p: 2 }}>
         O histórico está disponível a partir de <b>01/01/2020</b>. Não há limitação para o intervalo de datas.
       </Box>
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
@@ -110,7 +110,7 @@ const Historico = () => {
             value={estado}
             label="Estado"
             onChange={handleEstadoChange}
-            sx={{ background: '#F5F9FC', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif' }}
+            sx={{ background: 'background.default' }}
           >
             {estados.map((est) => (
               <MenuItem key={est.sigla} value={est.sigla}>{est.nome}</MenuItem>
@@ -124,7 +124,7 @@ const Historico = () => {
             value={cidade}
             label="Cidade"
             onChange={handleCidadeChange}
-            sx={{ background: '#F5F9FC', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif' }}
+            sx={{ background: 'background.default' }}
           >
             {cidades[estado].map((cid) => (
               <MenuItem key={cid} value={cid}>{cid}</MenuItem>
@@ -179,36 +179,41 @@ const Historico = () => {
         </Box>
       )}
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
+        <Alert 
+          severity="error" 
+          sx={{ mb: 3 }}
+        >
+          {error}
+        </Alert>
       )}
       {tab === 0 && !loading && (
         <Box>
-          <Typography variant="h5" gutterBottom sx={{ color: '#1B4F72', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif', fontWeight: 600 }}>
+          <Typography variant="h5" gutterBottom>
             Histórico de Chuvas - {cidade}/{estado}
           </Typography>
           {dadosChuvas && dadosChuvas.length > 0 ? (
             <>
               <Grid container spacing={3} sx={{ mb: 3 }}>
                 <Grid item xs={12} sm={4}>
-                  <Paper sx={{ p: 2, textAlign: 'center', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif' }}>
+                  <Paper sx={{ p: 2, textAlign: 'center' }}>
                     <Typography variant="h6" gutterBottom>Total</Typography>
                     <Typography variant="h4">{estatisticasChuvas.total} mm</Typography>
                   </Paper>
                 </Grid>
                 <Grid item xs={12} sm={4}>
-                  <Paper sx={{ p: 2, textAlign: 'center', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif' }}>
+                  <Paper sx={{ p: 2, textAlign: 'center' }}>
                     <Typography variant="h6" gutterBottom>Média Diária</Typography>
                     <Typography variant="h4">{estatisticasChuvas.media} mm</Typography>
                   </Paper>
                 </Grid>
                 <Grid item xs={12} sm={4}>
-                  <Paper sx={{ p: 2, textAlign: 'center', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif' }}>
+                  <Paper sx={{ p: 2, textAlign: 'center' }}>
                     <Typography variant="h6" gutterBottom>Máxima</Typography>
                     <Typography variant="h4">{estatisticasChuvas.maxima} mm</Typography>
                   </Paper>
                 </Grid>
               </Grid>
-              <Paper sx={{ p: 2, mb: 3, fontFamily: 'Neue Haas Grotesk, Arial, sans-serif' }}>
+              <Paper sx={{ p: 2, mb: 3 }}>
                 <Typography variant="h6" gutterBottom>Precipitação Diária (mm)</Typography>
                 <Box sx={{ height: 400 }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -246,7 +251,11 @@ const Historico = () => {
               </Paper>
             </>
           ) : (
-            <Alert severity="info">Nenhum dado encontrado para o período selecionado</Alert>
+            <Alert 
+              severity="info"
+            >
+              Nenhum dado encontrado para o período selecionado
+            </Alert>
           )}
         </Box>
       )}

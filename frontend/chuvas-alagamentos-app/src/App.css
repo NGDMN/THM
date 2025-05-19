@@ -3,7 +3,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Neue Haas Grotesk', Arial, sans-serif;
 }
 
 .App-logo {
@@ -18,7 +18,7 @@
 }
 
 .App-header {
-  background-color: #005792;
+  background-color: #1B4F72;
   padding: 1.5rem;
   color: white;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
@@ -39,7 +39,7 @@
 .App-content {
   flex: 1;
   padding: 2rem;
-  background-color: #f5f5f5;
+  background-color: #F5F9FC;
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
@@ -66,7 +66,7 @@
 
 .previsoes-container h2 {
   margin-top: 0;
-  color: #005792;
+  color: #1B4F72;
   border-bottom: 2px solid #f0f0f0;
   padding-bottom: 1rem;
 }
@@ -91,7 +91,7 @@
 }
 
 .previsao-info h3 {
-  color: #00334e;
+  color: #1B4F72;
   margin-top: 0;
 }
 
@@ -102,7 +102,7 @@
 }
 
 .App-footer {
-  background-color: #00334e;
+  background-color: #1B4F72;
   color: white;
   padding: 1rem;
   font-size: 0.9rem;
