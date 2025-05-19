@@ -70,7 +70,7 @@ class ChuvasModel:
             FROM 
                 chuvas_diarias
             WHERE 
-                UPPER(cidade) = UPPER(%(cidade)s)
+                UPPER(municipio) = UPPER(%(cidade)s)
                 AND UPPER(estado) = UPPER(%(estado)s)
                 AND data BETWEEN %(data_inicio)s AND %(data_fim)s
             ORDER BY data

@@ -27,7 +27,7 @@ class AlagamentosModel:
             FROM 
                 chuvas_diarias 
             WHERE 
-                cidade = %(cidade)s
+                municipio = %(cidade)s
                 AND data BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '3 days'
             """
             
@@ -63,7 +63,7 @@ class AlagamentosModel:
             FROM 
                 alagamentos 
             WHERE 
-                cidade = %(cidade)s
+                municipio = %(cidade)s
             ORDER BY 
                 local
             """
@@ -112,7 +112,7 @@ class AlagamentosModel:
             # Query para obter histórico do banco de dados
             query = """
             SELECT 
-                cidade, 
+                municipio, 
                 data, 
                 local,
                 dh_mortos,
@@ -120,7 +120,7 @@ class AlagamentosModel:
             FROM 
                 alagamentos 
             WHERE 
-                cidade = %(cidade)s
+                municipio = %(cidade)s
                 AND data BETWEEN %(data_inicio)s AND %(data_fim)s
             ORDER BY 
                 data DESC
@@ -184,7 +184,7 @@ class AlagamentosModel:
             FROM 
                 alagamentos 
             WHERE 
-                cidade = %(cidade)s
+                municipio = %(cidade)s
                 AND estado = %(estado)s
                 AND latitude IS NOT NULL
                 AND longitude IS NOT NULL
