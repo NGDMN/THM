@@ -5,6 +5,7 @@ const Footer = () => {
   return (
     <Box
       component="footer"
+      className="App-footer"
       sx={{
         py: 3,
         px: 2,

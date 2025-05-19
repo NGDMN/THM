@@ -6,7 +6,7 @@ const Header = () => {
   const navigate = useNavigate();
 
   return (
-    <AppBar position="static">
+    <AppBar position="static" className="App-header">
       <Toolbar>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: '#F5F9FC' }}>
           Sistema de Previsão de Alagamentos RJ/SP
