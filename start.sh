@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# Atualizar pip para a versão mais recente
+# Instalar todas as dependências do backend
 pip install --upgrade pip
+pip install -r requirements.txt
 
-# Instalar pacotes com versões compatíveis com Python 3.11
+# Instalar pacotes específicos (caso precise garantir versões)
 pip install numpy>=1.22.0
 pip install scipy>=1.8.0
 pip install pandas>=1.4.0
