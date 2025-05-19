@@ -123,12 +123,6 @@ def execute_query(query, params=None):
             if connection is None:
                 return pd.DataFrame()
             
-            # Converter nomes de parâmetros Oracle (:param) para PostgreSQL (%s)
-            if params:
-                # Substituir :nome_param por %(nome_param)s
-                for param_name in params:
-                    query = query.replace(f":{param_name}", f"%({param_name})s")
-                    
             cursor = connection.cursor(cursor_factory=RealDictCursor)
             
             if params:
@@ -166,25 +160,11 @@ def execute_dml(query, params=None):
             if connection is None:
                 return 0
             
-            # Converter nomes de parâmetros Oracle (:param) para PostgreSQL (%s)
-            if params and not isinstance(params, list):
-                # Substituir :nome_param por %(nome_param)s
-                for param_name in params:
-                    query = query.replace(f":{param_name}", f"%({param_name})s")
-            
             cursor = connection.cursor()
             
             if params:
                 if isinstance(params, list):
-                    # Converter parâmetros para formato PostgreSQL
-                    # Substituir :nome_param por %s para executemany
-                    for param_name in params[0]:
-                        query = query.replace(f":{param_name}", "%s")
-                    
-                    # Converter dicionários em listas ordenadas
-                    param_keys = list(params[0].keys())
-                    param_values = [[p[key] for key in param_keys] for p in params]
-                    cursor.executemany(query, param_values)
+                    cursor.executemany(query, params)
                 else:
                     cursor.execute(query, params)
             else:

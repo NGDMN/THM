@@ -28,8 +28,8 @@ class ChuvasModel:
             FROM 
                 previsoes 
             WHERE 
-                UPPER(cidade) = UPPER(:cidade)
-                AND UPPER(estado) = UPPER(:estado)
+                UPPER(cidade) = UPPER(%(cidade)s)
+                AND UPPER(estado) = UPPER(%(estado)s)
                 AND data BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days'
             ORDER BY data
             """
@@ -70,9 +70,9 @@ class ChuvasModel:
             FROM 
                 chuvas_diarias
             WHERE 
-                UPPER(cidade) = UPPER(:cidade)
-                AND UPPER(estado) = UPPER(:estado)
-                AND data BETWEEN :data_inicio AND :data_fim
+                UPPER(cidade) = UPPER(%(cidade)s)
+                AND UPPER(estado) = UPPER(%(estado)s)
+                AND data BETWEEN %(data_inicio)s AND %(data_fim)s
             ORDER BY data
             """
             params = {"cidade": cidade, "estado": estado, "data_inicio": data_inicio, "data_fim": data_fim}
