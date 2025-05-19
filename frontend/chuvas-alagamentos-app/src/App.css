@@ -1,7 +1,5 @@
 body, #root, .App {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
   margin: 0;
   padding: 0;
 }
@@ -9,6 +7,8 @@ body, #root, .App {
 .App {
   text-align: center;
   font-family: 'Neue Haas Grotesk', Arial, sans-serif;
+  min-height: 100vh;
+  position: relative;
 }
 
 .App-logo {
@@ -25,7 +25,6 @@ body, #root, .App {
 .App-header {
   position: fixed;
   top: 0;
-  left: 0;
   width: 100%;
   z-index: 1000;
   background-color: #1B4F72;
@@ -47,7 +46,6 @@ body, #root, .App {
 }
 
 .App-content {
-  flex: 1;
   padding: 2rem 1rem;
   background-color: #F5F9FC;
   max-width: 1200px;
@@ -56,6 +54,8 @@ body, #root, .App {
   box-sizing: border-box;
   min-height: calc(100vh - 160px);
   overflow-y: auto;
+  position: relative;
+  z-index: 1;
 }
 
 .erro-container {
@@ -116,7 +116,6 @@ body, #root, .App {
 .App-footer {
   position: fixed;
   bottom: 0;
-  left: 0;
   width: 100%;
   z-index: 1000;
   background-color: #1B4F72;
