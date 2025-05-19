@@ -2,9 +2,10 @@ import requests
 import datetime
 import logging
 from api.utils.db_utils import execute_query, execute_dml
+from api.config import OPENWEATHER_API_KEY
 
 # Configuração da API OpenWeatherMap
-OPENWEATHER_API_KEY = "50508f185d7a5337e4929c8816d2a46e"
+# OPENWEATHER_API_KEY agora vem do config
 OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5"
 
 # Mapeamento de IDs de cidades brasileiras importantes
