@@ -10,6 +10,7 @@ pip install pandas>=1.4.0
 pip install scikit-learn>=1.0.0
 pip install markupsafe
 pip install werkzeug==2.0.3
+pip install requests>=2.28.0
 
 # Instalar psycopg2 (necessário para acessar o banco PostgreSQL)
 pip install psycopg2-binary || echo "psycopg2 não instalado. Usar modo simulação."
