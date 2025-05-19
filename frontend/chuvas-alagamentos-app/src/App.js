@@ -12,6 +12,7 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import Previsoes from './pages/Previsoes';
 import Historico from './pages/Historico';
+import Recomendacoes from './pages/Recomendacoes';
 
 // Contextos
 import { AlertaProvider } from './contexts/AlertaContext';
@@ -58,6 +59,7 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/previsoes" element={<Previsoes />} />
                 <Route path="/historico" element={<Historico />} />
+                <Route path="/recomendacoes" element={<Recomendacoes />} />
                 <Route path="*" element={<h1>Página não encontrada!</h1>} />
               </Routes>
             </Box>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Box, Grid, Paper, Alert, CircularProgress, Tabs, Tab, TextField, Button } from '@mui/material';
+import { Container, Typography, Box, Grid, Paper, Alert, CircularProgress, Tabs, Tab, TextField, Button, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -10,29 +10,44 @@ import { format } from 'date-fns';
 // Componente para gráfico de linha simples
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
+const estados = [
+  { sigla: 'RJ', nome: 'Rio de Janeiro' },
+  { sigla: 'SP', nome: 'São Paulo' }
+];
+
+const cidades = {
+  'RJ': [
+    'Rio de Janeiro',
+    'Niterói',
+    'Duque de Caxias',
+    'Nova Iguaçu',
+    'São Gonçalo'
+  ],
+  'SP': [
+    'São Paulo',
+    'Campinas',
+    'Santos',
+    'Guarulhos',
+    'São Bernardo do Campo'
+  ]
+};
+
 const Historico = () => {
   const [tab, setTab] = useState(0);
   const [dadosChuvas, setDadosChuvas] = useState([]);
   const [dadosAlagamentos, setDadosAlagamentos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  
-  // Parâmetros de busca
-  const [cidade, setCidade] = useState('Rio de Janeiro');
   const [estado, setEstado] = useState('RJ');
+  const [cidade, setCidade] = useState('Rio de Janeiro');
   const [dataInicio, setDataInicio] = useState(new Date(new Date().setMonth(new Date().getMonth() - 1)));
   const [dataFim, setDataFim] = useState(new Date());
 
-  // Carregar dados quando os parâmetros mudam
   const handleBuscar = async () => {
     try {
       setLoading(true);
-      
-      // Formatar datas para API
       const dataInicioFormatada = format(dataInicio, 'yyyy-MM-dd');
       const dataFimFormatada = format(dataFim, 'yyyy-MM-dd');
-      
-      // Buscar dados
       if (tab === 0) {
         const dados = await getHistoricoChuvas(cidade, estado, dataInicioFormatada, dataFimFormatada);
         setDadosChuvas(dados);
@@ -40,7 +55,6 @@ const Historico = () => {
         const dados = await getHistoricoAlagamentos(cidade, estado, dataInicioFormatada, dataFimFormatada);
         setDadosAlagamentos(dados);
       }
-      
       setError(null);
     } catch (err) {
       console.error('Erro ao carregar histórico:', err);
@@ -50,21 +64,27 @@ const Historico = () => {
     }
   };
 
-  // Mudar aba
   const handleChangeTab = (event, newValue) => {
     setTab(newValue);
   };
 
-  // Calcular média e total de chuvas
+  const handleEstadoChange = (event) => {
+    const novoEstado = event.target.value;
+    setEstado(novoEstado);
+    setCidade(cidades[novoEstado][0]);
+  };
+
+  const handleCidadeChange = (event) => {
+    setCidade(event.target.value);
+  };
+
   const calcularEstatisticas = () => {
     if (!dadosChuvas || dadosChuvas.length === 0) {
       return { total: 0, media: 0, maxima: 0 };
     }
-    
     const total = dadosChuvas.reduce((soma, item) => soma + item.precipitacao, 0);
     const media = total / dadosChuvas.length;
     const maxima = Math.max(...dadosChuvas.map(item => item.precipitacao));
-    
     return {
       total: parseFloat(total.toFixed(1)),
       media: parseFloat(media.toFixed(1)),
@@ -76,38 +96,50 @@ const Historico = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
+      <Typography variant="h4" component="h1" gutterBottom sx={{ color: '#1B4F72', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif', fontWeight: 700, fontSize: '2.25rem', lineHeight: 1.2 }}>
         Histórico
       </Typography>
-      
+      <Box sx={{ mb: 2, background: '#F5F9FC', borderRadius: 2, p: 2, color: '#1B4F72', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif', fontSize: '1rem' }}>
+        O histórico está disponível a partir de <b>01/01/2020</b>. Não há limitação para o intervalo de datas.
+      </Box>
+      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+        <FormControl sx={{ minWidth: 180 }}>
+          <InputLabel id="estado-label">Estado</InputLabel>
+          <Select
+            labelId="estado-label"
+            value={estado}
+            label="Estado"
+            onChange={handleEstadoChange}
+            sx={{ background: '#F5F9FC', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif' }}
+          >
+            {estados.map((est) => (
+              <MenuItem key={est.sigla} value={est.sigla}>{est.nome}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl sx={{ minWidth: 220 }}>
+          <InputLabel id="cidade-label">Cidade</InputLabel>
+          <Select
+            labelId="cidade-label"
+            value={cidade}
+            label="Cidade"
+            onChange={handleCidadeChange}
+            sx={{ background: '#F5F9FC', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif' }}
+          >
+            {cidades[estado].map((cid) => (
+              <MenuItem key={cid} value={cid}>{cid}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs value={tab} onChange={handleChangeTab}>
           <Tab label="Chuvas" />
           <Tab label="Alagamentos" />
         </Tabs>
       </Box>
-      
-      {/* Filtros comuns */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={3}>
-            <TextField
-              label="Cidade"
-              value={cidade}
-              onChange={(e) => setCidade(e.target.value)}
-              fullWidth
-              variant="outlined"
-            />
-          </Grid>
-          <Grid item xs={12} sm={2}>
-            <TextField
-              label="Estado"
-              value={estado}
-              onChange={(e) => setEstado(e.target.value)}
-              fullWidth
-              variant="outlined"
-            />
-          </Grid>
           <Grid item xs={12} sm={3}>
             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
               <DatePicker
@@ -128,7 +160,7 @@ const Historico = () => {
               />
             </LocalizationProvider>
           </Grid>
-          <Grid item xs={12} sm={1}>
+          <Grid item xs={12} sm={2}>
             <Button 
               variant="contained" 
               color="primary" 
@@ -141,49 +173,42 @@ const Historico = () => {
           </Grid>
         </Grid>
       </Paper>
-      
       {loading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
           <CircularProgress />
         </Box>
       )}
-      
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
       )}
-      
       {tab === 0 && !loading && (
         <Box>
-          <Typography variant="h5" gutterBottom>
+          <Typography variant="h5" gutterBottom sx={{ color: '#1B4F72', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif', fontWeight: 600 }}>
             Histórico de Chuvas - {cidade}/{estado}
           </Typography>
-          
           {dadosChuvas && dadosChuvas.length > 0 ? (
             <>
               <Grid container spacing={3} sx={{ mb: 3 }}>
                 <Grid item xs={12} sm={4}>
-                  <Paper sx={{ p: 2, textAlign: 'center' }}>
+                  <Paper sx={{ p: 2, textAlign: 'center', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif' }}>
                     <Typography variant="h6" gutterBottom>Total</Typography>
                     <Typography variant="h4">{estatisticasChuvas.total} mm</Typography>
                   </Paper>
                 </Grid>
-                
                 <Grid item xs={12} sm={4}>
-                  <Paper sx={{ p: 2, textAlign: 'center' }}>
+                  <Paper sx={{ p: 2, textAlign: 'center', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif' }}>
                     <Typography variant="h6" gutterBottom>Média Diária</Typography>
                     <Typography variant="h4">{estatisticasChuvas.media} mm</Typography>
                   </Paper>
                 </Grid>
-                
                 <Grid item xs={12} sm={4}>
-                  <Paper sx={{ p: 2, textAlign: 'center' }}>
+                  <Paper sx={{ p: 2, textAlign: 'center', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif' }}>
                     <Typography variant="h6" gutterBottom>Máxima</Typography>
                     <Typography variant="h4">{estatisticasChuvas.maxima} mm</Typography>
                   </Paper>
                 </Grid>
               </Grid>
-              
-              <Paper sx={{ p: 2, mb: 3 }}>
+              <Paper sx={{ p: 2, mb: 3, fontFamily: 'Neue Haas Grotesk, Arial, sans-serif' }}>
                 <Typography variant="h6" gutterBottom>Precipitação Diária (mm)</Typography>
                 <Box sx={{ height: 400 }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -225,21 +250,18 @@ const Historico = () => {
           )}
         </Box>
       )}
-      
       {tab === 1 && !loading && (
         <Box>
-          <Typography variant="h5" gutterBottom>
+          <Typography variant="h5" gutterBottom sx={{ color: '#1B4F72', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif', fontWeight: 600 }}>
             Histórico de Alagamentos - {cidade}/{estado}
           </Typography>
-          
           {dadosAlagamentos && dadosAlagamentos.length > 0 ? (
             <Grid container spacing={2}>
               <Grid item xs={12}>
-                <Paper sx={{ p: 2 }}>
+                <Paper sx={{ p: 2, fontFamily: 'Neue Haas Grotesk, Arial, sans-serif' }}>
                   <Typography variant="h6" gutterBottom>
                     Ocorrências Registradas: {dadosAlagamentos.length}
                   </Typography>
-                  
                   {dadosAlagamentos.map((alagamento, index) => (
                     <Paper 
                       key={index} 
@@ -248,7 +270,8 @@ const Historico = () => {
                         my: 2, 
                         bgcolor: 
                           alagamento.nivelGravidade === 'alto' ? '#ffebee' : 
-                          alagamento.nivelGravidade === 'médio' ? '#fff8e1' : '#e8f5e9'
+                          alagamento.nivelGravidade === 'médio' ? '#fff8e1' : '#e8f5e9',
+                        fontFamily: 'Neue Haas Grotesk, Arial, sans-serif'
                       }}
                     >
                       <Typography variant="h6">
