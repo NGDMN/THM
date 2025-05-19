@@ -18,8 +18,7 @@ const Footer = () => {
           Sistema de Previsão de Alagamentos RJ/SP - © {new Date().getFullYear()}
         </Typography>
         <Typography variant="body2" align="center">
-          Desenvolvido com <Link color="inherit" href="https://reactjs.org/">React</Link> e 
-          <Link color="inherit" href="https://flask.palletsprojects.com/"> Flask</Link>
+          Desenvolvido por Goodman Solution Experts
         </Typography>
       </Container>
     </Box>

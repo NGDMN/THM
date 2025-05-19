@@ -21,9 +21,6 @@ const Header = () => {
           <Button color="inherit" onClick={() => navigate('/historico')}>
             Histórico
           </Button>
-          <Button color="inherit" onClick={() => navigate('/mapa')}>
-            Mapa
-          </Button>
         </Box>
       </Toolbar>
     </AppBar>
