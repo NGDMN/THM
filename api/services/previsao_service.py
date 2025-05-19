@@ -22,6 +22,15 @@ class PrevisaoService:
             float: Probabilidade de alagamento (0-1)
         """
         try:
+            # Garantir que precipitacao seja um número válido
+            if precipitacao is None:
+                precipitacao = 0.0
+            else:
+                try:
+                    precipitacao = float(precipitacao)
+                except (ValueError, TypeError):
+                    precipitacao = 0.0
+            
             # Em um sistema real, este cálculo seria baseado em um modelo
             # treinado com dados históricos. Aqui simplificamos com uma função
             # baseada em limiares de precipitação.
@@ -69,7 +78,7 @@ class PrevisaoService:
         except Exception as e:
             print(f"Erro ao calcular probabilidade de alagamento: {str(e)}")
             # Valor padrão em caso de erro
-            return 0.50 if precipitacao > 30 else 0.25
+            return 0.50 if precipitacao and precipitacao > 30 else 0.25
     
     @staticmethod
     def identificar_pontos_criticos(cidade, estado):
@@ -136,6 +145,15 @@ class PrevisaoService:
             dict: Dados de impacto esperado
         """
         try:
+            # Garantir que precipitacao seja um número válido
+            if precipitacao_prevista is None:
+                precipitacao_prevista = 0.0
+            else:
+                try:
+                    precipitacao_prevista = float(precipitacao_prevista)
+                except (ValueError, TypeError):
+                    precipitacao_prevista = 0.0
+                    
             # Em um sistema real, este seria um modelo mais complexo
             # com base em múltiplas variáveis (solo, relevo, urbanização)
             
@@ -199,33 +217,33 @@ class PrevisaoService:
                 # Adicionar variação aleatória para simular incerteza
                 afetados_estimados = int(media_afetados * np.random.uniform(0.8, 1.2))
                 
-                # Determinar nível de risco
-                if afetados_estimados < 100:
+                # Definir nível de risco com base na probabilidade
+                prob = PrevisaoService.calcular_probabilidade_alagamento(
+                    cidade, estado, precipitacao_prevista
+                )
+                
+                if prob < 0.3:
                     nivel_risco = 'baixo'
-                elif afetados_estimados < 300:
+                elif prob < 0.7:
                     nivel_risco = 'médio'
                 else:
                     nivel_risco = 'alto'
             
-            # Calcular probabilidade de alagamento
-            probabilidade = PrevisaoService.calcular_probabilidade_alagamento(
-                cidade, estado, precipitacao_prevista
-            )
-            
-            return {
-                'precipitacao': round(precipitacao_prevista, 1),
-                'probabilidade_alagamento': round(probabilidade, 2),
+            # Retornar impacto esperado
+            impacto = {
+                'probabilidade_alagamento': PrevisaoService.calcular_probabilidade_alagamento(
+                    cidade, estado, precipitacao_prevista
+                ),
                 'afetados_estimados': afetados_estimados,
                 'nivel_risco': nivel_risco
             }
             
+            return impacto
+            
         except Exception as e:
-            print(f"Erro ao calcular impacto de precipitação: {str(e)}")
-            # Valores padrão em caso de erro
+            print(f"Erro ao calcular impacto: {str(e)}")
             return {
-                'precipitacao': round(precipitacao_prevista, 1),
-                'probabilidade_alagamento': 0.5,
-                'afetados_estimados': 100,
-                'nivel_risco': 'médio',
-                'erro': str(e)
+                'probabilidade_alagamento': 0.1,
+                'afetados_estimados': 30,
+                'nivel_risco': 'baixo'
             } 

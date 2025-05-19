@@ -14,6 +14,59 @@ try:
 except ImportError:
     print("psycopg2 não está disponível. Usando dados simulados.")
 
+# Variável global para armazenar a conexão
+_connection = None
+
+def setup_database_connection():
+    """
+    Estabelece uma conexão com o banco de dados PostgreSQL.
+    Esta função deve ser chamada no início do script para configurar a conexão.
+    
+    Returns:
+        bool: True se a conexão foi estabelecida com sucesso, False caso contrário.
+    """
+    global _connection
+    
+    if not PSYCOPG2_AVAILABLE or USE_MOCK_DATA:
+        print("Usando dados simulados em vez de acessar o banco de dados.")
+        return False
+        
+    try:
+        _connection = psycopg2.connect(
+            dbname=DB_CONFIG['dbname'],
+            user=DB_CONFIG['user'],
+            password=DB_CONFIG['password'],
+            host=DB_CONFIG['host'],
+            port=DB_CONFIG['port']
+        )
+        print("Conexão com o banco de dados estabelecida com sucesso.")
+        return True
+    except Exception as e:
+        print(f"Erro ao conectar ao PostgreSQL: {str(e)}")
+        return False
+
+def close_database_connection():
+    """
+    Fecha a conexão com o banco de dados PostgreSQL.
+    Esta função deve ser chamada no final do script para liberar recursos.
+    
+    Returns:
+        bool: True se a conexão foi fechada com sucesso, False caso contrário.
+    """
+    global _connection
+    
+    if _connection:
+        try:
+            _connection.close()
+            _connection = None
+            print("Conexão com o banco de dados fechada com sucesso.")
+            return True
+        except Exception as e:
+            print(f"Erro ao fechar conexão com PostgreSQL: {str(e)}")
+            return False
+    
+    return True  # Não há conexão para fechar
+
 @contextmanager
 def get_connection():
     """
@@ -24,6 +77,12 @@ def get_connection():
         # Se o psycopg2 não estiver disponível, retornar None
         # O código que usa esta função deve estar preparado para lidar com isso
         yield None
+        return
+        
+    # Usar a conexão global se disponível
+    global _connection
+    if _connection:
+        yield _connection
         return
         
     connection = None
@@ -40,7 +99,7 @@ def get_connection():
         print(f"Erro ao conectar ao PostgreSQL: {str(e)}")
         yield None
     finally:
-        if connection:
+        if connection and connection != _connection:
             connection.close()
 
 def execute_query(query, params=None):

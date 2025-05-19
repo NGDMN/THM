@@ -15,6 +15,10 @@ DB_CONFIG = {
     'port': '5432'
 }
 
+# Configuração da API do OpenWeatherMap
+OPENWEATHER_API_KEY = "50508f185d7a5337e4929c8816d2a46e"
+OPENWEATHER_API_NAME = "Projeto_THM"
+
 # Configuração do Flask
 DEBUG = os.environ.get('FLASK_ENV', 'development') == 'development'
 PORT = int(os.environ.get('PORT', 5000))

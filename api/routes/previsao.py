@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
 from ..models.chuvas import ChuvasModel
 from ..models.alagamentos import AlagamentosModel
+from ..services.openweather_service import OpenWeatherService
+from ..services.previsao_service import PrevisaoService
 import json
 import psycopg2
 from ..config import DB_CONFIG
@@ -182,5 +184,76 @@ def previsao_alagamentos():
     except Exception as e:
         return jsonify({
             'erro': 'Erro ao obter previsão de alagamentos',
+            'mensagem': str(e)
+        }), 500
+
+@previsao_bp.route('/clima', methods=['GET'])
+def previsao_clima():
+    """
+    Endpoint para previsão meteorológica usando OpenWeatherMap
+    
+    Query params:
+        cidade (str): Nome da cidade
+        estado (str): Sigla do estado (RJ ou SP)
+        dias (int, opcional): Número de dias para previsão (máx 5)
+    
+    Returns:
+        JSON com dados meteorológicos
+    """
+    # Obter parâmetros
+    cidade = request.args.get('cidade')
+    estado = request.args.get('estado')
+    dias = request.args.get('dias', 5, type=int)
+    
+    # Validar parâmetros
+    if not cidade or not estado:
+        return jsonify({
+            'erro': 'Parâmetros inválidos',
+            'mensagem': 'Os parâmetros cidade e estado são obrigatórios'
+        }), 400
+    
+    # Validar estado (apenas RJ e SP para a versão atual)
+    if estado not in ['RJ', 'SP']:
+        return jsonify({
+            'erro': 'Estado inválido',
+            'mensagem': 'O estado deve ser RJ ou SP'
+        }), 400
+    
+    # Limitar o número de dias (API free do OpenWeatherMap permite até 5 dias)
+    if dias > 5:
+        dias = 5
+    
+    # Obter previsão do tempo
+    try:
+        previsoes = OpenWeatherService.get_weather_forecast(cidade, estado, dias)
+        
+        # Se não encontrou previsões, retornar erro
+        if not previsoes:
+            return jsonify({
+                'erro': 'Dados não encontrados',
+                'mensagem': f'Não foi possível obter previsões para {cidade}-{estado}'
+            }), 404
+        
+        # Calcular impacto e risco de alagamentos para cada dia
+        for previsao in previsoes:
+            precipitacao = previsao.get('precipitacao', 0)
+            impacto = PrevisaoService.calcular_impacto_precipitacao(
+                cidade, estado, precipitacao
+            )
+            previsao['risco_alagamento'] = {
+                'probabilidade': impacto['probabilidade_alagamento'],
+                'nivel': impacto['nivel_risco'],
+                'afetados_estimados': impacto['afetados_estimados']
+            }
+        
+        return jsonify({
+            'cidade': cidade,
+            'estado': estado,
+            'fonte': 'OpenWeatherMap',
+            'previsoes': previsoes
+        })
+    except Exception as e:
+        return jsonify({
+            'erro': 'Erro ao obter previsão meteorológica',
             'mensagem': str(e)
         }), 500 

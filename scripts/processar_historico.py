@@ -609,7 +609,7 @@ def insert_into_postgres(df_chuvas, daily_rain, df_alagamentos, merged):
                     print(f"Total de {total_inserted} registros de chuva inseridos em lotes.")
                 except Exception as batch_insert_error:
                     print(f"Erro ao inserir em lotes: {str(batch_insert_error)}")
-                    conn.rollback()
+                conn.rollback()
         
         # Inserir dados de alagamentos
         if not df_alagamentos.empty:
