@@ -18,9 +18,6 @@ const Header = () => {
           <Button color="inherit" onClick={() => navigate('/previsoes')}>
             Previsões
           </Button>
-          <Button color="inherit" onClick={() => navigate('/mapa')}>
-            Mapa
-          </Button>
           <Button color="inherit" onClick={() => navigate('/historico')}>
             Histórico
           </Button>
