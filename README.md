@@ -31,7 +31,9 @@ O sistema é composto por três componentes principais:
 3. **Frontend React**
    - Dashboard interativo
    - Visualizações em tempo real
-   - Mapas e gráficos
+   - Gráficos de previsão e histórico
+   - Alertas em tempo real
+   - Seleção de cidade e estado para análise
 
 ## Estrutura do Projeto
 
@@ -39,7 +41,6 @@ O sistema é composto por três componentes principais:
 .
 ├── api/                    # Backend em Python/Flask
 │   ├── app.py             # Aplicação principal
-│   ├── config.py          # Configurações
 │   ├── models/            # Modelos de dados
 │   ├── routes/            # Rotas da API
 │   ├── services/          # Serviços
@@ -47,8 +48,8 @@ O sistema é composto por três componentes principais:
 ├── frontend/              # Frontend em React
 │   ├── public/            # Arquivos públicos
 │   └── src/               # Código fonte
-├── docs/                  # Documentação
-└── scripts/              # Scripts de utilidade
+├── scripts/               # Scripts de utilidade
+└── README.md              # Documentação principal
 ```
 
 ## Tecnologias Utilizadas
@@ -56,24 +57,25 @@ O sistema é composto por três componentes principais:
 ### Backend (API)
 - Python 3.7+
 - Flask
-- SQLAlchemy
-- cx_Oracle
 - pandas
 - scikit-learn
+- psycopg2-binary
+- APScheduler
 
 ### Frontend
 - React
 - Material-UI
-- Chart.js
+- Chart.js / Recharts
 - Axios
+- React Router
+- Date-fns
 
 ## Instalação e Configuração
 
 ### Pré-requisitos
 - Python 3.7+
 - Node.js 14+
-- Oracle Client
-- Oracle Wallet configurado
+- PostgreSQL (produção)
 
 ### Backend
 ```bash
@@ -82,24 +84,27 @@ python -m venv venv
 .\venv\Scripts\activate  # No Windows
 
 # Instalar dependências
-pip install -r api/requirements.txt
+pip install -r requirements.txt
 ```
 
 ### Frontend
 ```bash
-cd frontend
+cd frontend/chuvas-alagamentos-app
 npm install
 ```
 
 ### Variáveis de Ambiente
-Crie um arquivo `.env` na raiz do diretório `api`:
+Crie um arquivo `.env` na raiz do projeto (UTF-8):
 ```
-FLASK_APP=app.py
-FLASK_ENV=development
-ORACLE_USER=ADMIN
-ORACLE_PASSWORD=SuaSenhaAqui
-ORACLE_DSN=chuvasalagamentos_high
-TNS_ADMIN=C:\Users\SeuUsuario\OracleWallet
+DB_NAME=thm_iy9l
+DB_USER=thm_admin
+DB_PASSWORD=SuaSenhaAqui
+DB_HOST=dpg-d0l48cre5dus73c970sg-a.ohio-postgres.render.com
+DB_PORT=5432
+OPENWEATHER_API_KEY=SuaChaveAqui
+FLASK_APP=api/app.py
+FLASK_ENV=production
+PORT=10000
 ```
 
 ## Documentação da API
@@ -108,31 +113,31 @@ TNS_ADMIN=C:\Users\SeuUsuario\OracleWallet
 
 #### Previsão de Chuvas
 ```
-GET /api/previsao/chuvas?cidade={cidade}&estado={estado}
+GET /previsao/chuvas?cidade={cidade}&estado={estado}
 ```
 Retorna a previsão de precipitação para os próximos 7 dias.
 
 #### Histórico de Chuvas
 ```
-GET /api/historico/chuvas?cidade={cidade}&estado={estado}&dataInicio={dataInicio}&dataFim={dataFim}
+GET /historico/chuvas?cidade={cidade}&estado={estado}&dataInicio={dataInicio}&dataFim={dataFim}
 ```
 Retorna dados históricos de precipitação.
 
 #### Previsão de Alagamentos
 ```
-GET /api/previsao/alagamentos?cidade={cidade}&estado={estado}
+GET /previsao/alagamentos?cidade={cidade}&estado={estado}
 ```
 Retorna a previsão de risco de alagamentos.
 
 #### Histórico de Alagamentos
 ```
-GET /api/historico/alagamentos?cidade={cidade}&estado={estado}&dataInicio={dataInicio}&dataFim={dataFim}
+GET /historico/alagamentos?cidade={cidade}&estado={estado}&dataInicio={dataInicio}&dataFim={dataFim}
 ```
 Retorna dados históricos de ocorrências de alagamentos.
 
 #### Pontos de Alagamento
 ```
-GET /api/historico/pontos/alagamentos?cidade={cidade}&estado={estado}
+GET /historico/pontos/alagamentos?cidade={cidade}&estado={estado}
 ```
 Retorna os pontos de alagamento conhecidos.
 
@@ -140,35 +145,35 @@ Retorna os pontos de alagamento conhecidos.
 
 ### Executando o Frontend
 ```bash
-cd frontend
+cd frontend/chuvas-alagamentos-app
 npm start
 ```
 O aplicativo estará disponível em http://localhost:3000
 
 ### Principais Funcionalidades
 - Dashboard interativo
-- Visualização de mapas
-- Gráficos de previsão
-- Histórico de dados
+- Gráficos de previsão e histórico
+- Seleção dinâmica de cidade e estado
+- Recomendações em caso de risco
 - Alertas em tempo real
+
+### Build para Produção
+```bash
+npm run build
+```
 
 ## Banco de Dados
 
 ### Estrutura
-A API se conecta ao Oracle, acessando as tabelas:
+A API se conecta ao PostgreSQL, acessando as tabelas:
 - chuvas_diarias
 - alagamentos
-- chuvas_alagamentos
-
-### Configuração
-1. Instale o Oracle Client
-2. Configure o Oracle Wallet
-3. Configure as variáveis de ambiente
+- previsoes
 
 ## Desenvolvimento
 
 ### Modo de Desenvolvimento
-Para desenvolvimento sem Oracle:
+Para desenvolvimento sem banco de dados:
 ```bash
 set USE_MOCK_DATA=True
 flask run

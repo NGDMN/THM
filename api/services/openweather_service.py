@@ -3,6 +3,7 @@ import datetime
 import logging
 from api.utils.db_utils import execute_query, execute_dml
 from api.config import OPENWEATHER_API_KEY
+from api.services.previsao_service import PrevisaoService
 
 # Configuração da API OpenWeatherMap
 # OPENWEATHER_API_KEY agora vem do config
@@ -198,3 +199,18 @@ class OpenWeatherService:
                 resultados[cidade] = registros
         print(f"[LOG] Resultado final: {resultados}")
         return resultados 
+
+    @staticmethod
+    def enrich_with_risk(previsoes, cidade, estado):
+        """
+        Enriquecer previsões meteorológicas com cálculo de risco de alagamento
+        """
+        for previsao in previsoes:
+            precipitacao = previsao.get('precipitacao', 0)
+            impacto = PrevisaoService.calcular_impacto_precipitacao(cidade, estado, precipitacao)
+            previsao['risco_alagamento'] = {
+                'probabilidade': impacto['probabilidade_alagamento'],
+                'nivel': impacto['nivel_risco'],
+                'afetados_estimados': impacto['afetados_estimados']
+            }
+        return previsoes 
