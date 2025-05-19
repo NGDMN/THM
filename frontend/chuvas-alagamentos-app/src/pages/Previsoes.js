@@ -8,14 +8,15 @@ const Previsoes = () => {
   const [alagamentos, setAlagamentos] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [cidade, setCidade] = useState('Rio de Janeiro');
+  const [estado, setEstado] = useState('RJ');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Por enquanto, usando Rio de Janeiro como padrão
-        const dadosChuvas = await getPrevisaoChuvas();
-        const dadosAlagamentos = await getPrevisaoAlagamentos();
+        const dadosChuvas = await getPrevisaoChuvas(cidade, estado);
+        const dadosAlagamentos = await getPrevisaoAlagamentos(cidade, estado);
         
         setChuvas(dadosChuvas);
         setAlagamentos(dadosAlagamentos);
@@ -29,7 +30,7 @@ const Previsoes = () => {
     };
 
     fetchData();
-  }, []);
+  }, [cidade, estado]);
 
   const handleChangeTab = (event, newValue) => {
     setTab(newValue);
@@ -51,10 +52,16 @@ const Previsoes = () => {
     );
   }
 
+  // Função para formatar a data
+  const formatarData = (dataString) => {
+    const data = new Date(dataString);
+    return data.toLocaleDateString('pt-BR');
+  };
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
       <Typography variant="h4" component="h1" gutterBottom>
-        Previsões
+        Previsões para {cidade} - {estado}
       </Typography>
       
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
@@ -70,16 +77,40 @@ const Previsoes = () => {
             Previsão de Chuvas
           </Typography>
           
-          {chuvas ? (
+          {chuvas && chuvas.length > 0 ? (
             <Grid container spacing={2}>
-              {/* Renderizar dados de chuvas quando disponíveis */}
-              <Grid item xs={12}>
-                <Paper sx={{ p: 2 }}>
-                  <Typography>
-                    Dados temporários para simulação. Implemente a visualização real com os dados recebidos da API.
-                  </Typography>
-                </Paper>
-              </Grid>
+              {chuvas.map((previsao, index) => (
+                <Grid item xs={12} sm={6} md={4} key={index}>
+                  <Paper 
+                    sx={{ 
+                      p: 2, 
+                      display: 'flex', 
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      bgcolor: previsao.precipitacao >= 30 ? '#ffebee' : 
+                              previsao.precipitacao >= 15 ? '#fff8e1' : '#e8f5e9'
+                    }}
+                  >
+                    <Typography variant="h6">{formatarData(previsao.data)}</Typography>
+                    <Box 
+                      sx={{ 
+                        mt: 2, 
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <Typography variant="h4" color="text.secondary">
+                        {previsao.precipitacao} mm
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        {previsao.precipitacao >= 30 ? 'Risco de alagamento' : 
+                        previsao.precipitacao >= 15 ? 'Chuva moderada' : 'Chuva leve/sem chuva'}
+                      </Typography>
+                    </Box>
+                  </Paper>
+                </Grid>
+              ))}
             </Grid>
           ) : (
             <Alert severity="info">Nenhum dado de previsão disponível</Alert>
@@ -94,13 +125,50 @@ const Previsoes = () => {
           </Typography>
           
           {alagamentos ? (
-            <Grid container spacing={2}>
-              {/* Renderizar dados de alagamentos quando disponíveis */}
+            <Grid container spacing={3}>
               <Grid item xs={12}>
-                <Paper sx={{ p: 2 }}>
-                  <Typography>
-                    Dados temporários para simulação. Implemente a visualização real com os dados recebidos da API.
+                <Paper sx={{ p: 3, bgcolor: 
+                  alagamentos.nivelRisco === 'alto' ? '#ffebee' : 
+                  alagamentos.nivelRisco === 'médio' ? '#fff8e1' : '#e8f5e9' 
+                }}>
+                  <Typography variant="h6" gutterBottom>
+                    Nível de risco: {alagamentos.nivelRisco.toUpperCase()}
                   </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    Probabilidade de alagamentos: {(alagamentos.probabilidade * 100).toFixed(0)}%
+                  </Typography>
+                </Paper>
+              </Grid>
+              
+              {alagamentos.areasAfetadas && alagamentos.areasAfetadas.length > 0 && (
+                <Grid item xs={12} md={6}>
+                  <Paper sx={{ p: 3 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Áreas com histórico de alagamentos
+                    </Typography>
+                    <ul>
+                      {alagamentos.areasAfetadas.map((area, index) => (
+                        <li key={index}>
+                          <Typography variant="body1">{area}</Typography>
+                        </li>
+                      ))}
+                    </ul>
+                  </Paper>
+                </Grid>
+              )}
+              
+              <Grid item xs={12} md={alagamentos.areasAfetadas && alagamentos.areasAfetadas.length > 0 ? 6 : 12}>
+                <Paper sx={{ p: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Recomendações
+                  </Typography>
+                  <ul>
+                    {alagamentos.recomendacoes.map((recomendacao, index) => (
+                      <li key={index}>
+                        <Typography variant="body1">{recomendacao}</Typography>
+                      </li>
+                    ))}
+                  </ul>
                 </Paper>
               </Grid>
             </Grid>

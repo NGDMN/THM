@@ -1,24 +1,23 @@
 import os
-from dotenv import load_dotenv
-
-# Carregar variáveis de ambiente do arquivo .env
-load_dotenv()
+# Removendo a dependência do arquivo .env que está causando erro
+# from dotenv import load_dotenv
+# load_dotenv()
 
 # Configuração para usar banco de dados real ao invés de dados simulados
 USE_MOCK_DATA = False
 
-# Configurações do banco de dados PostgreSQL
+# Configurações do banco de dados PostgreSQL no Render
 DB_CONFIG = {
-    'dbname': os.getenv('PG_DBNAME', 'thm'),
-    'user': os.getenv('PG_USER', 'postgres'),
-    'password': os.getenv('PG_PASSWORD', ''),
-    'host': os.getenv('PG_HOST', 'localhost'),
-    'port': os.getenv('PG_PORT', '5432')
+    'dbname': 'thm_iy9l',
+    'user': 'thm_admin',
+    'password': 'fBfTMpHLfe2htlV9fe63mc0v9SmUTStS',
+    'host': 'dpg-d0l48cre5dus73c970sg-a.ohio-postgres.render.com',
+    'port': '5432'
 }
 
 # Configuração do Flask
-DEBUG = os.getenv('FLASK_ENV', 'development') == 'development'
-PORT = int(os.getenv('PORT', 5000))
+DEBUG = os.environ.get('FLASK_ENV', 'development') == 'development'
+PORT = int(os.environ.get('PORT', 5000))
 
 # Caminhos para arquivos de dados
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

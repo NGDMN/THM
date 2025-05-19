@@ -40,14 +40,6 @@ API_KEY = os.getenv('API_CLIMATEMPO_KEY', '')
 # Nível de precipitação para emitir alerta (em mm)
 LIMIAR_ALERTA_CHUVA = 30.0  # mm de chuva por dia
 
-# Lista de cidades a serem monitoradas
-CIDADES = [
-    {'nome': 'Rio de Janeiro', 'estado': 'RJ', 'id_api': '5959'},
-    {'nome': 'Niterói', 'estado': 'RJ', 'id_api': '5894'},
-    {'nome': 'São Paulo', 'estado': 'SP', 'id_api': '3477'},
-    {'nome': 'Campinas', 'estado': 'SP', 'id_api': '4750'}
-]
-
 def conectar_banco():
     """Conecta ao banco PostgreSQL"""
     try:
@@ -63,6 +55,58 @@ def conectar_banco():
         logging.error(f"Erro ao conectar ao banco: {e}")
         return None
 
+def obter_municipios_rj_sp():
+    """
+    Obtém lista de todos os municípios de RJ e SP do banco de dados
+    
+    Returns:
+        list: Lista de dicionários com informações dos municípios
+    """
+    conn = conectar_banco()
+    if not conn:
+        return []
+        
+    cursor = conn.cursor()
+    municipios = []
+    
+    try:
+        # Buscar todos os municípios de RJ e SP 
+        query = """
+        SELECT DISTINCT municipio, estado 
+        FROM chuvas_diarias 
+        WHERE estado IN ('RJ', 'SP')
+        ORDER BY estado, municipio
+        """
+        
+        cursor.execute(query)
+        resultados = cursor.fetchall()
+        
+        for municipio, estado in resultados:
+            municipios.append({
+                'nome': municipio,
+                'estado': estado,
+                'id_api': ''  # Não temos os IDs da API para todos os municípios
+            })
+            
+        # Se não encontrou municípios, incluir ao menos as capitais
+        if not municipios:
+            municipios = [
+                {'nome': 'Rio de Janeiro', 'estado': 'RJ', 'id_api': '5959'},
+                {'nome': 'São Paulo', 'estado': 'SP', 'id_api': '3477'}
+            ]
+        
+        return municipios
+        
+    except Exception as e:
+        logging.error(f"Erro ao obter municípios: {e}")
+        return [
+            {'nome': 'Rio de Janeiro', 'estado': 'RJ', 'id_api': '5959'},
+            {'nome': 'São Paulo', 'estado': 'SP', 'id_api': '3477'}
+        ]
+    finally:
+        cursor.close()
+        conn.close()
+
 def obter_previsao_api(cidade_id):
     """
     Obtém previsão de chuva da API do Climatempo para os próximos 7 dias
@@ -74,7 +118,7 @@ def obter_previsao_api(cidade_id):
         list: Lista de previsões para os próximos 7 dias
     """
     if not API_KEY:
-        logging.warning("Chave de API não configurada. Usando dados simulados.")
+        logging.warning("Chave de API não configurada. Não é possível obter previsões reais.")
         return None
         
     url = f"http://apiadvisor.climatempo.com.br/api/v1/forecast/locale/{cidade_id}/days/15?token={API_KEY}"
@@ -105,46 +149,6 @@ def obter_previsao_api(cidade_id):
     except Exception as e:
         logging.error(f"Erro na requisição à API: {e}")
         return None
-
-def gerar_dados_simulados(cidade, dias=7):
-    """
-    Gera dados simulados para testes quando a API não está disponível
-    
-    Args:
-        cidade (dict): Informações da cidade
-        dias (int): Número de dias para gerar previsão
-        
-    Returns:
-        list: Lista de previsões simuladas
-    """
-    import random
-    
-    previsoes = []
-    hoje = datetime.now().date()
-    
-    # Coeficiente para simular variações regionais
-    coef = 1.2 if cidade['estado'] == 'RJ' else 0.8
-    
-    for i in range(dias):
-        data = hoje + timedelta(days=i)
-        
-        # Simular variação sazonal (mais chuva no verão)
-        mes = data.month
-        if 12 <= mes <= 12 or 1 <= mes <= 3:  # Verão
-            base_precip = random.uniform(5, 25) * coef
-        else:
-            base_precip = random.uniform(0, 15) * coef
-            
-        # Adicionar alguns picos de chuva
-        if i == 2 or i == 5:  # Criar dois dias de chuva mais intensa
-            base_precip *= 2
-            
-        previsoes.append({
-            'data': data.strftime('%Y-%m-%d'),
-            'precipitacao': round(base_precip, 1)
-        })
-    
-    return previsoes
 
 def salvar_previsoes(cidade, previsoes):
     """
@@ -178,7 +182,7 @@ def salvar_previsoes(cidade, previsoes):
                 cidade['estado'],
                 data,
                 float(previsao['precipitacao']),
-                'API_CLIMATEMPO' if API_KEY else 'SIMULAÇÃO'
+                'API_CLIMATEMPO' if API_KEY else 'INPE' # Usar outra fonte se não tiver API Climatempo
             ))
         
         # Inserir dados com upsert (atualizar se já existir)
@@ -292,27 +296,27 @@ def main():
     """Função principal para atualizar previsões de todas as cidades"""
     logging.info("Iniciando atualização de previsões de chuva...")
     
-    for cidade in CIDADES:
+    # Obter lista de todos os municípios de RJ e SP
+    municipios = obter_municipios_rj_sp()
+    logging.info(f"Total de {len(municipios)} municípios encontrados para processamento")
+    
+    for cidade in municipios:
         logging.info(f"Processando cidade: {cidade['nome']}/{cidade['estado']}")
         
-        # Tenta obter dados da API
-        if API_KEY:
+        # Tenta obter dados da API se tiver ID da cidade
+        previsoes = None
+        if API_KEY and cidade.get('id_api'):
             previsoes = obter_previsao_api(cidade['id_api'])
-        else:
-            previsoes = None
             
-        # Se não conseguir, usa dados simulados
+        # Se não conseguir dados da API, pular cidade
         if not previsoes:
-            logging.info(f"Usando dados simulados para {cidade['nome']}")
-            previsoes = gerar_dados_simulados(cidade)
+            logging.warning(f"Sem dados de previsão para {cidade['nome']}. Continuando para próxima cidade.")
+            continue
             
         # Salva no banco de dados
-        if previsoes:
-            sucesso = salvar_previsoes(cidade, previsoes)
-            if not sucesso:
-                logging.warning(f"Falha ao salvar previsões para {cidade['nome']}")
-        else:
-            logging.error(f"Não foi possível obter previsões para {cidade['nome']}")
+        sucesso = salvar_previsoes(cidade, previsoes)
+        if not sucesso:
+            logging.warning(f"Falha ao salvar previsões para {cidade['nome']}")
     
     # Verificar alertas de alagamentos
     municipios_alerta = verificar_alerta_alagamentos()
