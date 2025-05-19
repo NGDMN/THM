@@ -3,6 +3,8 @@ from flask_cors import CORS
 from api.routes.previsao import previsao_bp
 from api.routes.historico import historico_bp
 from api.config import PORT, DEBUG
+from apscheduler.schedulers.background import BackgroundScheduler
+import atexit
 
 # Adicionar código para configurar o path do Python
 import os
@@ -49,6 +51,22 @@ def admin_atualizar_previsoes():
             'status': 'erro',
             'mensagem': str(e)
         }, 500
+
+# Função para ingestão automática
+def ingestao_automatica():
+    print('[LOG] Iniciando ingestão automática de previsões...')
+    try:
+        from api.services.openweather_service import OpenWeatherService
+        resultado = OpenWeatherService.atualizar_previsoes_todas_cidades()
+        print(f'[LOG] Ingestão automática concluída: {resultado}')
+    except Exception as e:
+        print(f'[LOG] Erro na ingestão automática: {e}')
+
+# Agendar ingestão diária às 04:00
+scheduler = BackgroundScheduler()
+scheduler.add_job(ingestao_automatica, 'cron', hour=4, minute=0)
+scheduler.start()
+atexit.register(lambda: scheduler.shutdown())
 
 if __name__ == '__main__':
     print(f"Iniciando servidor na porta {PORT}...")

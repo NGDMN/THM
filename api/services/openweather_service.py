@@ -186,12 +186,15 @@ class OpenWeatherService:
             dict: Resultado da atualização por cidade
         """
         resultados = {}
-        
+        print("[LOG] Iniciando atualização de previsões para todas as cidades...")
         # Atualizar para cidades específicas de SP e RJ
         for cidade, info in CITY_IDS.items():
             if info["state"] in ["SP", "RJ"]:
+                print(f"[LOG] Buscando previsões para {cidade}-{info['state']}")
                 previsoes = OpenWeatherService.get_weather_forecast(cidade, info["state"], dias)
+                print(f"[LOG] Previsões obtidas para {cidade}: {previsoes}")
                 registros = OpenWeatherService.salvar_previsoes(previsoes)
+                print(f"[LOG] Registros inseridos para {cidade}: {registros}")
                 resultados[cidade] = registros
-        
+        print(f"[LOG] Resultado final: {resultados}")
         return resultados 
