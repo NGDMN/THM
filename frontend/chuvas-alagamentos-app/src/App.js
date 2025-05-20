@@ -39,6 +39,18 @@ const theme = createTheme({
       primary: '#1B4F72',
       secondary: '#CB6D51',
     },
+    error: {
+      light: '#ffebee',
+      main: '#d32f2f',
+    },
+    warning: {
+      light: '#fff8e1',
+      main: '#ff9800',
+    },
+    success: {
+      light: '#e8f5e9',
+      main: '#4caf50',
+    }
   },
   typography: {
     fontFamily: 'Neue Haas Grotesk, Arial, sans-serif',
@@ -46,6 +58,8 @@ const theme = createTheme({
     h2: { fontWeight: 600, fontSize: '2.25rem', lineHeight: 1.2 },
     h3: { fontWeight: 600, fontSize: '1.5rem', lineHeight: 1.2 },
     h4: { fontWeight: 600, fontSize: '1.25rem', lineHeight: 1.2 },
+    h5: { fontWeight: 600, fontSize: '1.1rem', lineHeight: 1.2 },
+    h6: { fontWeight: 600, fontSize: '1rem', lineHeight: 1.2 },
     body1: { fontSize: '1rem', lineHeight: 1.5 },
     body2: { fontSize: '0.875rem', lineHeight: 1.5 },
   },
@@ -56,6 +70,8 @@ const theme = createTheme({
         root: {
           backgroundColor: '#1B4F72',
           color: '#F5F9FC',
+          height: '90px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
         },
       },
     },
@@ -66,10 +82,12 @@ const theme = createTheme({
           textTransform: 'none',
           fontWeight: 600,
           padding: '0.75rem 1.5rem',
-          backgroundColor: '#CB6D51',
-          color: '#F5F9FC',
-          '&:hover': {
-            backgroundColor: '#D07D64',
+          '&.MuiButton-contained': {
+            backgroundColor: '#CB6D51',
+            color: '#F5F9FC',
+            '&:hover': {
+              backgroundColor: '#D07D64',
+            },
           },
         },
       },
@@ -123,6 +141,13 @@ const theme = createTheme({
         root: {
           borderRadius: 8,
           boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+        },
+      },
+    },
+    MuiSelect: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#F5F9FC',
         },
       },
     },

@@ -1,29 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Box, Grid, Paper, Alert, CircularProgress, Tabs, Tab, MenuItem, Select, FormControl, InputLabel, Button } from '@mui/material';
-import { getPrevisaoChuvas, getPrevisaoAlagamentos } from '../services/alertaService';
+import { Container, Typography, Box, Grid, Paper, Alert, CircularProgress, Tabs, Tab, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import { getPrevisaoChuvas, getPrevisaoAlagamentos, getMunicipios } from '../services/alertaService';
 import { useNavigate } from 'react-router-dom';
 
 const estados = [
   { sigla: 'RJ', nome: 'Rio de Janeiro' },
   { sigla: 'SP', nome: 'São Paulo' }
 ];
-
-const cidades = {
-  'RJ': [
-    'Rio de Janeiro',
-    'Niterói',
-    'Duque de Caxias',
-    'Nova Iguaçu',
-    'São Gonçalo'
-  ],
-  'SP': [
-    'São Paulo',
-    'Campinas',
-    'Santos',
-    'Guarulhos',
-    'São Bernardo do Campo'
-  ]
-};
 
 const Previsoes = () => {
   const [tab, setTab] = useState(0);
@@ -32,11 +15,36 @@ const Previsoes = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [estado, setEstado] = useState('RJ');
-  const [cidade, setCidade] = useState('Rio de Janeiro');
+  const [cidade, setCidade] = useState('');
+  const [municipios, setMunicipios] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
+    const fetchMunicipios = async () => {
+      try {
+        const dados = await getMunicipios();
+        const municipiosPorEstado = dados.reduce((acc, municipio) => {
+          if (!acc[municipio.uf]) {
+            acc[municipio.uf] = [];
+          }
+          acc[municipio.uf].push(municipio.nome);
+          return acc;
+        }, {});
+        setMunicipios(municipiosPorEstado);
+        if (municipiosPorEstado[estado]?.length > 0) {
+          setCidade(municipiosPorEstado[estado][0]);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar municípios:', err);
+        setError('Não foi possível carregar a lista de municípios');
+      }
+    };
+    fetchMunicipios();
+  }, []);
+
+  useEffect(() => {
     const fetchData = async () => {
+      if (!cidade) return;
       try {
         setLoading(true);
         const dadosChuvas = await getPrevisaoChuvas(cidade, estado);
@@ -61,7 +69,9 @@ const Previsoes = () => {
   const handleEstadoChange = (event) => {
     const novoEstado = event.target.value;
     setEstado(novoEstado);
-    setCidade(cidades[novoEstado][0]);
+    if (municipios[novoEstado]?.length > 0) {
+      setCidade(municipios[novoEstado][0]);
+    }
   };
 
   const handleCidadeChange = (event) => {
@@ -79,21 +89,12 @@ const Previsoes = () => {
   if (error) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Alert 
-          severity="error" 
-          sx={{ mb: 3 }}
-        >
+        <Alert severity="error" sx={{ mb: 3 }}>
           {error}
         </Alert>
       </Container>
     );
   }
-
-  // Função para formatar a data
-  const formatarData = (dataString) => {
-    const data = new Date(dataString);
-    return data.toLocaleDateString('pt-BR');
-  };
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
@@ -108,7 +109,6 @@ const Previsoes = () => {
             value={estado}
             label="Estado"
             onChange={handleEstadoChange}
-            sx={{ background: 'background.default' }}
           >
             {estados.map((est) => (
               <MenuItem key={est.sigla} value={est.sigla}>{est.nome}</MenuItem>
@@ -122,9 +122,8 @@ const Previsoes = () => {
             value={cidade}
             label="Cidade"
             onChange={handleCidadeChange}
-            sx={{ background: 'background.default' }}
           >
-            {cidades[estado].map((cid) => (
+            {municipios[estado]?.map((cid) => (
               <MenuItem key={cid} value={cid}>{cid}</MenuItem>
             ))}
           </Select>
@@ -140,7 +139,9 @@ const Previsoes = () => {
                   display: 'flex', 
                   flexDirection: 'column',
                   alignItems: 'center',
-                  bgcolor: previsao.precipitacao >= 30 ? 'error.light' : previsao.precipitacao >= 15 ? 'warning.light' : 'success.light',
+                  bgcolor: previsao.precipitacao >= 30 ? 'error.light' : 
+                           previsao.precipitacao >= 15 ? 'warning.light' : 
+                           'success.light'
                 }}
               >
                 <Typography variant="h6">{previsao.data}</Typography>

@@ -1,10 +1,11 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 from api.routes.previsao import previsao_bp
 from api.routes.historico import historico_bp
 from api.config import PORT, DEBUG
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
+import pandas as pd
 
 # Adicionar código para configurar o path do Python
 import os
@@ -67,6 +68,18 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(ingestao_automatica, 'cron', hour=4, minute=0)
 scheduler.start()
 atexit.register(lambda: scheduler.shutdown())
+
+@app.route('/municipios', methods=['GET'])
+def listar_municipios():
+    try:
+        df = pd.read_csv('data/municipios_RJ_SP_coords.csv')
+        municipios = [
+            {'uf': row['uf'], 'nome': row['municipio']}
+            for _, row in df.iterrows()
+        ]
+        return jsonify(municipios)
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
 
 if __name__ == '__main__':
     print(f"Iniciando servidor na porta {PORT}...")

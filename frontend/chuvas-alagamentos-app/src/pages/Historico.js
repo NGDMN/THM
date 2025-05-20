@@ -4,7 +4,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import ptBR from 'date-fns/locale/pt-BR';
-import { getHistoricoChuvas, getHistoricoAlagamentos } from '../services/alertaService';
+import { getHistoricoChuvas, getHistoricoAlagamentos, getMunicipios } from '../services/alertaService';
 import { format } from 'date-fns';
 
 // Componente para gráfico de linha simples
@@ -15,33 +15,60 @@ const estados = [
   { sigla: 'SP', nome: 'São Paulo' }
 ];
 
-const cidades = {
-  'RJ': [
-    'Rio de Janeiro',
-    'Niterói',
-    'Duque de Caxias',
-    'Nova Iguaçu',
-    'São Gonçalo'
-  ],
-  'SP': [
-    'São Paulo',
-    'Campinas',
-    'Santos',
-    'Guarulhos',
-    'São Bernardo do Campo'
-  ]
-};
-
 const Historico = () => {
   const [tab, setTab] = useState(0);
-  const [dadosChuvas, setDadosChuvas] = useState([]);
-  const [dadosAlagamentos, setDadosAlagamentos] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [chuvas, setChuvas] = useState(null);
+  const [alagamentos, setAlagamentos] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [estado, setEstado] = useState('RJ');
-  const [cidade, setCidade] = useState('Rio de Janeiro');
+  const [cidade, setCidade] = useState('');
+  const [municipios, setMunicipios] = useState({});
   const [dataInicio, setDataInicio] = useState(null);
   const [dataFim, setDataFim] = useState(null);
+
+  useEffect(() => {
+    const fetchMunicipios = async () => {
+      try {
+        const dados = await getMunicipios();
+        const municipiosPorEstado = dados.reduce((acc, municipio) => {
+          if (!acc[municipio.uf]) {
+            acc[municipio.uf] = [];
+          }
+          acc[municipio.uf].push(municipio.nome);
+          return acc;
+        }, {});
+        setMunicipios(municipiosPorEstado);
+        if (municipiosPorEstado[estado]?.length > 0) {
+          setCidade(municipiosPorEstado[estado][0]);
+        }
+      } catch (err) {
+        console.error('Erro ao carregar municípios:', err);
+        setError('Não foi possível carregar a lista de municípios');
+      }
+    };
+    fetchMunicipios();
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!cidade) return;
+      try {
+        setLoading(true);
+        const dadosChuvas = await getHistoricoChuvas(cidade, estado);
+        const dadosAlagamentos = await getHistoricoAlagamentos(cidade, estado);
+        setChuvas(dadosChuvas);
+        setAlagamentos(dadosAlagamentos);
+        setError(null);
+      } catch (err) {
+        console.error('Erro ao carregar histórico:', err);
+        setError('Não foi possível carregar o histórico');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [cidade, estado]);
 
   const handleBuscar = async () => {
     try {
@@ -50,10 +77,10 @@ const Historico = () => {
       const dataFimFormatada = dataFim ? format(dataFim, 'yyyy-MM-dd') : '';
       if (tab === 0) {
         const dados = await getHistoricoChuvas(cidade, estado, dataInicioFormatada, dataFimFormatada);
-        setDadosChuvas(dados);
+        setChuvas(dados);
       } else {
         const dados = await getHistoricoAlagamentos(cidade, estado, dataInicioFormatada, dataFimFormatada);
-        setDadosAlagamentos(dados);
+        setAlagamentos(dados);
       }
       setError(null);
     } catch (err) {
@@ -71,7 +98,9 @@ const Historico = () => {
   const handleEstadoChange = (event) => {
     const novoEstado = event.target.value;
     setEstado(novoEstado);
-    setCidade(cidades[novoEstado][0]);
+    if (municipios[novoEstado]?.length > 0) {
+      setCidade(municipios[novoEstado][0]);
+    }
   };
 
   const handleCidadeChange = (event) => {
@@ -79,12 +108,12 @@ const Historico = () => {
   };
 
   const calcularEstatisticas = () => {
-    if (!dadosChuvas || dadosChuvas.length === 0) {
+    if (!chuvas || chuvas.length === 0) {
       return { total: 0, media: 0, maxima: 0 };
     }
-    const total = dadosChuvas.reduce((soma, item) => soma + item.precipitacao, 0);
-    const media = total / dadosChuvas.length;
-    const maxima = Math.max(...dadosChuvas.map(item => item.precipitacao));
+    const total = chuvas.reduce((soma, item) => soma + item.precipitacao, 0);
+    const media = total / chuvas.length;
+    const maxima = Math.max(...chuvas.map(item => item.precipitacao));
     return {
       total: parseFloat(total.toFixed(1)),
       media: parseFloat(media.toFixed(1)),
@@ -94,10 +123,28 @@ const Historico = () => {
 
   const estatisticasChuvas = calcularEstatisticas();
 
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      </Container>
+    );
+  }
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
       <Typography variant="h4" component="h1" gutterBottom>
-        Histórico
+        Histórico para {cidade} - {estado}
       </Typography>
       <Box sx={{ mb: 2, background: 'background.default', borderRadius: 2, p: 2 }}>
         O histórico está disponível a partir de <b>01/01/2020</b>. Não há limitação para o intervalo de datas.
@@ -110,7 +157,6 @@ const Historico = () => {
             value={estado}
             label="Estado"
             onChange={handleEstadoChange}
-            sx={{ background: 'background.default' }}
           >
             {estados.map((est) => (
               <MenuItem key={est.sigla} value={est.sigla}>{est.nome}</MenuItem>
@@ -124,9 +170,8 @@ const Historico = () => {
             value={cidade}
             label="Cidade"
             onChange={handleCidadeChange}
-            sx={{ background: 'background.default' }}
           >
-            {cidades[estado].map((cid) => (
+            {municipios[estado]?.map((cid) => (
               <MenuItem key={cid} value={cid}>{cid}</MenuItem>
             ))}
           </Select>
@@ -173,25 +218,12 @@ const Historico = () => {
           </Grid>
         </Grid>
       </Paper>
-      {loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-          <CircularProgress />
-        </Box>
-      )}
-      {error && (
-        <Alert 
-          severity="error" 
-          sx={{ mb: 3 }}
-        >
-          {error}
-        </Alert>
-      )}
       {tab === 0 && !loading && (
         <Box>
           <Typography variant="h5" gutterBottom>
             Histórico de Chuvas - {cidade}/{estado}
           </Typography>
-          {dadosChuvas && dadosChuvas.length > 0 ? (
+          {chuvas && chuvas.length > 0 ? (
             <>
               <Grid container spacing={3} sx={{ mb: 3 }}>
                 <Grid item xs={12} sm={4}>
@@ -218,7 +250,7 @@ const Historico = () => {
                 <Box sx={{ height: 400 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
-                      data={dadosChuvas}
+                      data={chuvas}
                       margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" />
@@ -264,14 +296,14 @@ const Historico = () => {
           <Typography variant="h5" gutterBottom sx={{ color: '#1B4F72', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif', fontWeight: 600 }}>
             Histórico de Alagamentos - {cidade}/{estado}
           </Typography>
-          {dadosAlagamentos && dadosAlagamentos.length > 0 ? (
+          {alagamentos && alagamentos.length > 0 ? (
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <Paper sx={{ p: 2, fontFamily: 'Neue Haas Grotesk, Arial, sans-serif' }}>
                   <Typography variant="h6" gutterBottom>
-                    Ocorrências Registradas: {dadosAlagamentos.length}
+                    Ocorrências Registradas: {alagamentos.length}
                   </Typography>
-                  {dadosAlagamentos.map((alagamento, index) => (
+                  {alagamentos.map((alagamento, index) => (
                     <Paper 
                       key={index} 
                       sx={{ 

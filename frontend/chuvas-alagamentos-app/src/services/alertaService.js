@@ -68,10 +68,22 @@ export const getHistoricoAlagamentos = async (cidade, estado, inicio, fim) => {
   }
 };
 
+// Obter lista de municípios
+export const getMunicipios = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/municipios`);
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao buscar lista de municípios:', error);
+    throw error;
+  }
+};
+
 export default {
   getDadosAlerta,
   getPrevisaoChuvas,
   getPrevisaoAlagamentos,
   getHistoricoChuvas,
-  getHistoricoAlagamentos
+  getHistoricoAlagamentos,
+  getMunicipios
 }; 
