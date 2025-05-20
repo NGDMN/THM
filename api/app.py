@@ -74,7 +74,7 @@ def listar_municipios():
     try:
         df = pd.read_csv('data/municipios_RJ_SP_coords.csv')
         municipios = [
-            {'uf': row['uf'], 'nome': row['municipio']}
+            {'uf': row['estado'], 'nome': row['municipio']}
             for _, row in df.iterrows()
         ]
         return jsonify(municipios)
