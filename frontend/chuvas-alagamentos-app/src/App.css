@@ -31,8 +31,6 @@ html, body, #root {
 }
 
 .App-header, .MuiAppBar-root {
-  background: #1976d2;
-  color: #fff !important;
   position: fixed;
   top: 0;
   left: 0;
@@ -59,7 +57,6 @@ html, body, #root {
 .App-content {
   flex: 1;
   padding: 2rem 1rem;
-  background-color: #F5F9FC;
   max-width: 1200px;
   margin: 90px auto 70px auto;
   width: 100%;
@@ -89,7 +86,6 @@ html, body, #root {
 
 .previsoes-container h2 {
   margin-top: 0;
-  color: #1B4F72;
   border-bottom: 2px solid #f0f0f0;
   padding-bottom: 1rem;
 }
@@ -114,19 +110,15 @@ html, body, #root {
 }
 
 .previsao-info h3 {
-  color: #1B4F72;
   margin-top: 0;
 }
 
 .previsao-info p {
   margin: 0.5rem 0;
   font-size: 1rem;
-  color: #444;
 }
 
 .App-footer {
-  background: #1976d2;
-  color: #fff;
   position: fixed;
   left: 0;
   bottom: 0;
