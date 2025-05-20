@@ -212,31 +212,40 @@ def aggregate_daily_rainfall(df_chuvas):
             print("Coluna Datetime não encontrada. Não é possível agregar por dia.")
             return pd.DataFrame()
             
-        df_chuvas['Date'] = df_chuvas['Datetime'].dt.date
+        # Converter Datetime para data (sem hora)
+        df_chuvas['Date'] = pd.to_datetime(df_chuvas['Datetime']).dt.date
         
         # Verificar o nome correto das colunas necessárias
         precip_col = None
-        
         for col in df_chuvas.columns:
             if 'PRECIPITA' in col.upper() and 'HOR' in col.upper():
                 precip_col = col
+                break
                 
         if not precip_col:
             print("Coluna de precipitação não encontrada. Não é possível agregar dados de chuva.")
             return pd.DataFrame()
         
-        # Usamos diretamente a coluna Municipio que foi adicionada durante o carregamento
-        # Verificamos se ela existe
+        # Verificar se a coluna Municipio existe
         if 'Municipio' not in df_chuvas.columns:
             print("Coluna Municipio não encontrada. Não é possível agregar por município.")
             return pd.DataFrame()
             
         # Converter precipitação para número antes de somar
-        df_chuvas[precip_col] = df_chuvas[precip_col].astype(str).str.replace(',', '.').astype(float)
+        df_chuvas[precip_col] = pd.to_numeric(df_chuvas[precip_col].astype(str).str.replace(',', '.'), errors='coerce')
         
-        # Agregar por município, UF e data
+        # Remover linhas com valores nulos em precipitação
+        df_chuvas = df_chuvas.dropna(subset=[precip_col])
+        
+        # Agregar por município, UF e data, somando todas as precipitações do dia
         daily_rain = df_chuvas.groupby(['Municipio', 'UF', 'Date'])[precip_col].sum().reset_index()
         daily_rain = daily_rain.rename(columns={precip_col: 'precipitacao_diaria'})
+        
+        # Verificar se há duplicatas após a agregação
+        duplicatas = daily_rain.duplicated(subset=['Municipio', 'Date'], keep=False)
+        if duplicatas.any():
+            print(f"ATENÇÃO: Encontradas {duplicatas.sum()} duplicatas após agregação. Removendo...")
+            daily_rain = daily_rain.drop_duplicates(subset=['Municipio', 'Date'], keep='first')
         
         print(f"Totais diários de chuva: {len(daily_rain)} registros.")
         return daily_rain
@@ -559,12 +568,21 @@ def insert_into_postgres(df_chuvas, daily_rain, df_alagamentos, merged):
         except Exception as trunc_error:
             print(f"Aviso ao limpar tabelas: {str(trunc_error)}")
             
+        # FILTRO: Remover registros inválidos antes da inserção em lote
+        if not daily_rain.empty:
+            print("[LIMPEZA] Removendo registros inválidos de daily_rain...")
+            # Remover nulos
+            daily_rain = daily_rain.dropna(subset=['Municipio', 'UF', 'Date', 'precipitacao_diaria'])
+            # Garantir que data é válida
+            daily_rain = daily_rain[pd.to_datetime(daily_rain['Date'], errors='coerce').notnull()]
+            # Garantir que precipitacao_diaria é numérico
+            daily_rain = daily_rain[pd.to_numeric(daily_rain['precipitacao_diaria'], errors='coerce').notnull()]
+            print(f"[LIMPEZA] Registros restantes após limpeza: {len(daily_rain)}")
+        
         # Inserir dados de chuvas diárias
         if not daily_rain.empty:
             try:
                 print("Inserindo dados de chuvas diárias...")
-                
-                # Preparar dados para inserção
                 data_tuples = []
                 for _, row in daily_rain.iterrows():
                     data_tuples.append((
@@ -573,8 +591,6 @@ def insert_into_postgres(df_chuvas, daily_rain, df_alagamentos, merged):
                         row['Date'],
                         float(row['precipitacao_diaria'])
                     ))
-                
-                # Usar execute_values para inserção em lote
                 query = """
                     INSERT INTO chuvas_diarias (municipio, estado, data, precipitacao_diaria) 
                     VALUES %s
@@ -582,51 +598,21 @@ def insert_into_postgres(df_chuvas, daily_rain, df_alagamentos, merged):
                         precipitacao_diaria = EXCLUDED.precipitacao_diaria,
                         estado = EXCLUDED.estado
                 """
+                try:
+                    conn.rollback()  # Garante que a transação está limpa
+                except Exception:
+                    pass
                 execute_values(cursor, query, data_tuples)
                 conn.commit()
                 print(f"{len(data_tuples)} registros inseridos em chuvas_diarias.")
             except Exception as insert_error:
                 print(f"Erro ao inserir dados em chuvas_diarias: {str(insert_error)}")
                 conn.rollback()
-                
-                # Tentar inserir em lotes menores em caso de erro
-                try:
-                    print("Tentando inserir chuvas em lotes menores...")
-                    batch_size = 1000
-                    total_inserted = 0
-                    
-                    for i in range(0, len(data_tuples), batch_size):
-                        batch = data_tuples[i:i+batch_size]
-                        try:
-                            execute_values(cursor, query, batch)
-                            conn.commit()
-                            total_inserted += len(batch)
-                            print(f"  Lote {i//batch_size + 1}: {len(batch)} registros inseridos.")
-                        except Exception as batch_error:
-                            print(f"  Erro no lote {i//batch_size + 1}: {str(batch_error)}")
-                            conn.rollback()
-                    
-                    print(f"Total de {total_inserted} registros de chuva inseridos em lotes.")
-                except Exception as batch_insert_error:
-                    print(f"Erro ao inserir em lotes: {str(batch_insert_error)}")
-                conn.rollback()
         
         # Inserir dados de alagamentos
         if not df_alagamentos.empty:
             try:
                 print("Inserindo dados de alagamentos...")
-                
-                # Verificar colunas necessárias
-                pop_col = None
-                mortos_col = None
-                
-                for col in df_alagamentos.columns:
-                    if 'POPULA' in col.upper():
-                        pop_col = col
-                    elif 'MORTOS' in col.upper():
-                        mortos_col = col
-                
-                # Preparar dados para inserção
                 data_tuples = []
                 for _, row in df_alagamentos.iterrows():
                     data_tuples.append((
@@ -634,11 +620,9 @@ def insert_into_postgres(df_chuvas, daily_rain, df_alagamentos, merged):
                         row['UF'] if 'UF' in row else '',
                         row['Date'],
                         row['local'] if 'local' in row else None,
-                        float(row[mortos_col]) if mortos_col else 0,
-                        float(row[pop_col]) if pop_col else 0
+                        float(row['dh_mortos']) if 'dh_mortos' in row else 0,
+                        float(row['dh_afetados']) if 'dh_afetados' in row else 0
                     ))
-                
-                # Usar execute_values para inserção em lote
                 query = """
                     INSERT INTO alagamentos (municipio, estado, data, local, dh_mortos, dh_afetados) 
                     VALUES %s
