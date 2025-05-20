@@ -2,6 +2,13 @@ import React from 'react';
 import { Box, Typography, Container } from '@mui/material';
 
 const Footer = () => {
+  const footerStyle = {
+    background: '#1976d2',
+    color: '#F5F9FC', // branco azulado
+    padding: '12px 0',
+    textAlign: 'center',
+  };
+
   return (
     <Box
       component="footer"

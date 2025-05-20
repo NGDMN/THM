@@ -578,7 +578,7 @@ def insert_into_postgres(df_chuvas, daily_rain, df_alagamentos, merged):
             # Garantir que precipitacao_diaria é numérico
             daily_rain = daily_rain[pd.to_numeric(daily_rain['precipitacao_diaria'], errors='coerce').notnull()]
             print(f"[LIMPEZA] Registros restantes após limpeza: {len(daily_rain)}")
-        
+            
         # Inserir dados de chuvas diárias
         if not daily_rain.empty:
             try:

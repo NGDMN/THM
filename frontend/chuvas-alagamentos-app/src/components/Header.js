@@ -5,6 +5,13 @@ import { useNavigate } from 'react-router-dom';
 const Header = () => {
   const navigate = useNavigate();
 
+  const headerStyle = {
+    background: '#1976d2',
+    color: '#F5F9FC', // branco azulado
+    padding: '16px 0',
+    textAlign: 'center',
+  };
+
   return (
     <AppBar position="fixed" className="App-header">
       <Toolbar>
