@@ -40,14 +40,14 @@ const Historico = () => {
   const [error, setError] = useState(null);
   const [estado, setEstado] = useState('RJ');
   const [cidade, setCidade] = useState('Rio de Janeiro');
-  const [dataInicio, setDataInicio] = useState(new Date(new Date().setMonth(new Date().getMonth() - 1)));
-  const [dataFim, setDataFim] = useState(new Date());
+  const [dataInicio, setDataInicio] = useState(null);
+  const [dataFim, setDataFim] = useState(null);
 
   const handleBuscar = async () => {
     try {
       setLoading(true);
-      const dataInicioFormatada = format(dataInicio, 'yyyy-MM-dd');
-      const dataFimFormatada = format(dataFim, 'yyyy-MM-dd');
+      const dataInicioFormatada = dataInicio ? format(dataInicio, 'yyyy-MM-dd') : '';
+      const dataFimFormatada = dataFim ? format(dataFim, 'yyyy-MM-dd') : '';
       if (tab === 0) {
         const dados = await getHistoricoChuvas(cidade, estado, dataInicioFormatada, dataFimFormatada);
         setDadosChuvas(dados);

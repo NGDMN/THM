@@ -5,7 +5,8 @@ const Footer = () => {
   return (
     <Box
       component="footer"
-      className="App-footer"
+      className="App-footer pattern-footer"
+      sx={{ backgroundColor: 'primary.main', color: 'primary.contrastText', position: 'fixed', left: 0, bottom: 0, width: '100%', height: '70px', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 -2px 4px rgba(0,0,0,0.08)' }}
     >
       <Container maxWidth="lg">
         <Typography variant="body1" align="center">

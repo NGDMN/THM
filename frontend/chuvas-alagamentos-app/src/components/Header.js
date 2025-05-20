@@ -8,7 +8,7 @@ const Header = () => {
   return (
     <AppBar position="fixed" className="App-header">
       <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+        <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: 'primary.contrastText !important' }}>
           Sistema de Previsão de Alagamentos RJ/SP
         </Typography>
         <Box>
