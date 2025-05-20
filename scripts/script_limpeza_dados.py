@@ -563,8 +563,6 @@ def insert_into_postgres(df_chuvas, daily_rain, df_alagamentos, merged):
         if not daily_rain.empty:
             try:
                 print("Inserindo dados de chuvas diárias...")
-                
-                # Preparar dados para inserção
                 data_tuples = []
                 for _, row in daily_rain.iterrows():
                     data_tuples.append((
@@ -573,10 +571,8 @@ def insert_into_postgres(df_chuvas, daily_rain, df_alagamentos, merged):
                         row['Date'],
                         float(row['precipitacao_diaria'])
                     ))
-                
-                # Usar execute_values para inserção em lote
                 query = """
-                    INSERT INTO chuvas_diarias (municipio, estado, data, precipitacao) 
+                    INSERT INTO chuvas_diarias (municipio, estado, data, precipitacao_diaria) 
                     VALUES %s
                 """
                 execute_values(cursor, query, data_tuples)
@@ -590,31 +586,18 @@ def insert_into_postgres(df_chuvas, daily_rain, df_alagamentos, merged):
         if not df_alagamentos.empty:
             try:
                 print("Inserindo dados de alagamentos...")
-                
-                # Verificar colunas necessárias
-                pop_col = None
-                mortos_col = None
-                
-                for col in df_alagamentos.columns:
-                    if 'POPULA' in col.upper():
-                        pop_col = col
-                    elif 'MORTOS' in col.upper():
-                        mortos_col = col
-                
-                # Preparar dados para inserção
                 data_tuples = []
                 for _, row in df_alagamentos.iterrows():
                     data_tuples.append((
                         row['Municipio'],
                         row['UF'] if 'UF' in row else '',
                         row['Date'],
-                        float(row[pop_col]) if pop_col else 0,
-                        float(row[mortos_col]) if mortos_col else 0
+                        row['local'] if 'local' in row else None,
+                        float(row['dh_mortos']) if 'dh_mortos' in row else 0,
+                        float(row['dh_afetados']) if 'dh_afetados' in row else 0
                     ))
-                
-                # Usar execute_values para inserção em lote
                 query = """
-                    INSERT INTO alagamentos (municipio, estado, data, populacao, mortos) 
+                    INSERT INTO alagamentos (municipio, estado, data, local, dh_mortos, dh_afetados) 
                     VALUES %s
                 """
                 execute_values(cursor, query, data_tuples)

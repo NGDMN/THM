@@ -30,18 +30,18 @@ html, body, #root {
   }
 }
 
-.App-header {
+.App-header, .MuiAppBar-root {
+  background: #1976d2;
+  color: #fff !important;
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
   width: 100%;
   height: 90px;
   z-index: 9999;
-  background-color: #1B4F72;
-  color: #F5F9FC;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
 }
 
 .App-header h1 {
@@ -65,6 +65,8 @@ html, body, #root {
   width: 100%;
   min-height: calc(100vh - 160px);
   overflow-y: auto;
+  padding-top: 100px !important;
+  padding-bottom: 80px !important;
 }
 
 .erro-container {
@@ -123,19 +125,18 @@ html, body, #root {
 }
 
 .App-footer {
+  background: #1976d2;
+  color: #fff;
   position: fixed;
-  bottom: 0;
   left: 0;
-  right: 0;
+  bottom: 0;
   width: 100%;
   height: 70px;
   z-index: 9999;
-  background-color: #1B4F72;
-  color: #F5F9FC;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-  padding: 1rem;
-  font-size: 0.9rem;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 -2px 4px rgba(0,0,0,0.08);
 }
 
 /* Estilos responsivos */
@@ -176,5 +177,12 @@ html, body, #root {
   to {
     transform: rotate(360deg);
   }
+}
+
+body {
+  background: #f5f8fa;
+  margin: 0;
+  font-family: 'Roboto', Arial, sans-serif;
+  box-sizing: border-box;
 }
 
