@@ -55,8 +55,10 @@ const Historico = () => {
       if (!cidade) return;
       try {
         setLoading(true);
-        const dadosChuvas = await getHistoricoChuvas(cidade, estado);
-        const dadosAlagamentos = await getHistoricoAlagamentos(cidade, estado);
+        const dataInicioFormatada = dataInicio ? format(dataInicio, 'yyyy-MM-dd') : format(new Date('2020-01-01'), 'yyyy-MM-dd');
+        const dataFimFormatada = dataFim ? format(dataFim, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
+        const dadosChuvas = await getHistoricoChuvas(cidade, estado, dataInicioFormatada, dataFimFormatada);
+        const dadosAlagamentos = await getHistoricoAlagamentos(cidade, estado, dataInicioFormatada, dataFimFormatada);
         setChuvas(dadosChuvas);
         setAlagamentos(dadosAlagamentos);
         setError(null);
@@ -68,7 +70,7 @@ const Historico = () => {
       }
     };
     fetchData();
-  }, [cidade, estado]);
+  }, [cidade, estado, dataInicio, dataFim]);
 
   const handleBuscar = async () => {
     try {

@@ -45,9 +45,13 @@ export const getPrevisaoAlagamentos = async (cidade, estado, dias = 7) => {
 // Obter histórico de chuvas
 export const getHistoricoChuvas = async (cidade, estado, inicio, fim) => {
   try {
-    const response = await axios.get(
-      `${API_URL}/historico/chuvas?cidade=${cidade}&estado=${estado}&dataInicio=${inicio}&dataFim=${fim}`
-    );
+    const params = new URLSearchParams();
+    if (cidade) params.append('cidade', cidade);
+    if (estado) params.append('estado', estado);
+    if (inicio) params.append('dataInicio', inicio);
+    if (fim) params.append('dataFim', fim);
+    
+    const response = await axios.get(`${API_URL}/historico/chuvas?${params.toString()}`);
     return response.data;
   } catch (error) {
     console.error('Erro ao buscar histórico de chuvas:', error);
@@ -58,9 +62,13 @@ export const getHistoricoChuvas = async (cidade, estado, inicio, fim) => {
 // Obter histórico de alagamentos
 export const getHistoricoAlagamentos = async (cidade, estado, inicio, fim) => {
   try {
-    const response = await axios.get(
-      `${API_URL}/historico/alagamentos?cidade=${cidade}&estado=${estado}&dataInicio=${inicio}&dataFim=${fim}`
-    );
+    const params = new URLSearchParams();
+    if (cidade) params.append('cidade', cidade);
+    if (estado) params.append('estado', estado);
+    if (inicio) params.append('dataInicio', inicio);
+    if (fim) params.append('dataFim', fim);
+    
+    const response = await axios.get(`${API_URL}/historico/alagamentos?${params.toString()}`);
     return response.data;
   } catch (error) {
     console.error('Erro ao buscar histórico de alagamentos:', error);

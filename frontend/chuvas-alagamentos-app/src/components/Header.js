@@ -14,7 +14,7 @@ const Header = () => {
 
   return (
     <AppBar position="fixed" className="App-header">
-      <Toolbar>
+      <Toolbar sx={{ alignItems: 'center', height: '100%' }}>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }} color="primary.contrastText">
           Sistema de Previsão de Alagamentos RJ/SP
         </Typography>
