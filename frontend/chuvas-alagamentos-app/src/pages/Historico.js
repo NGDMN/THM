@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Box, Grid, Paper, Alert, CircularProgress, Tabs, Tab, TextField, Button, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import { Container, Typography, Box, Grid, Paper, Alert, CircularProgress, Tabs, Tab, TextField, Button, MenuItem, Select, FormControl, InputLabel, Chip } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -7,6 +7,9 @@ import ptBR from 'date-fns/locale/pt-BR';
 import { getHistoricoChuvas, getHistoricoAlagamentos, getMunicipios } from '../services/alertaService';
 import { format } from 'date-fns';
 import Diagnostico from '../components/Diagnostico';
+import { List, ListItem, ListItemText } from '@mui/material';
+import { WarningIcon } from '@mui/icons-material';
+import { TableContainer, Table, TableHead, TableBody, TableRow } from '@mui/material';
 
 // Componente para gráfico de linha simples
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -36,7 +39,7 @@ const Historico = () => {
           if (!acc[municipio.uf]) {
             acc[municipio.uf] = [];
           }
-          acc[municipios.uf].push(municipio.nome);
+          acc[municipio.uf].push(municipio.nome);
           return acc;
         }, {});
         setMunicipios(municipiosPorEstado);
@@ -56,7 +59,6 @@ const Historico = () => {
       setLoading(true);
       setError(null);
 
-      // Validação das datas
       if (dataInicio && dataFim && dataInicio > dataFim) {
         setError('A data inicial não pode ser maior que a data final');
         return;
@@ -65,22 +67,18 @@ const Historico = () => {
       const dataInicioFormatada = dataInicio ? format(dataInicio, 'yyyy-MM-dd') : format(new Date('2020-01-01'), 'yyyy-MM-dd');
       const dataFimFormatada = dataFim ? format(dataFim, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
       
-      if (tab === 0) {
-        const dados = await getHistoricoChuvas(cidade, estado, dataInicioFormatada, dataFimFormatada);
-        if (!dados || dados.length === 0) {
-          setError('Nenhum dado encontrado para o período selecionado');
-          setChuvas([]);
-        } else {
-          setChuvas(dados);
-        }
+      const [dadosChuvas, dadosAlagamentos] = await Promise.all([
+        getHistoricoChuvas(cidade, estado, dataInicioFormatada, dataFimFormatada),
+        getHistoricoAlagamentos(cidade, estado, dataInicioFormatada, dataFimFormatada)
+      ]);
+
+      if (!dadosChuvas || dadosChuvas.length === 0) {
+        setError('Nenhum dado encontrado para o período selecionado');
+        setChuvas([]);
+        setAlagamentos([]);
       } else {
-        const dados = await getHistoricoAlagamentos(cidade, estado, dataInicioFormatada, dataFimFormatada);
-        if (!dados || dados.length === 0) {
-          setError('Nenhum dado encontrado para o período selecionado');
-          setAlagamentos([]);
-        } else {
-          setAlagamentos(dados);
-        }
+        setChuvas(dadosChuvas);
+        setAlagamentos(dadosAlagamentos || []);
       }
     } catch (err) {
       console.error('Erro ao carregar histórico:', err);
@@ -150,11 +148,9 @@ const Historico = () => {
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
       <Typography variant="h4" component="h1" gutterBottom>
-        Histórico para {cidade} - {estado}
+        Histórico de Chuvas e Alagamentos
       </Typography>
-      <Box sx={{ mb: 2, background: 'background.default', borderRadius: 2, p: 2 }}>
-        O histórico está disponível a partir de <b>01/01/2020</b>. Não há limitação para o intervalo de datas.
-      </Box>
+
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
         <FormControl sx={{ minWidth: 180 }}>
           <InputLabel id="estado-label">Estado</InputLabel>
@@ -169,6 +165,7 @@ const Historico = () => {
             ))}
           </Select>
         </FormControl>
+
         <FormControl sx={{ minWidth: 220 }}>
           <InputLabel id="cidade-label">Cidade</InputLabel>
           <Select
@@ -182,178 +179,133 @@ const Historico = () => {
             ))}
           </Select>
         </FormControl>
+
+        <TextField
+          label="Data Inicial"
+          type="date"
+          value={dataInicio}
+          onChange={(e) => setDataInicio(e.target.value)}
+          InputLabelProps={{ shrink: true }}
+          sx={{ minWidth: 180 }}
+        />
+
+        <TextField
+          label="Data Final"
+          type="date"
+          value={dataFim}
+          onChange={(e) => setDataFim(e.target.value)}
+          InputLabelProps={{ shrink: true }}
+          sx={{ minWidth: 180 }}
+        />
+
+        <Button 
+          variant="contained" 
+          onClick={handleSubmit}
+          disabled={loading}
+        >
+          Buscar
+        </Button>
       </Box>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={tab} onChange={handleChangeTab}>
-          <Tab label="Chuvas" />
-          <Tab label="Alagamentos" />
-        </Tabs>
-      </Box>
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={3}>
-              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                <DatePicker
-                  label="Data Início"
-                  value={dataInicio}
-                  onChange={(newValue) => {
-                    setDataInicio(newValue);
-                  }}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      variant: "outlined"
-                    }
-                  }}
-                  format="dd/MM/yyyy"
-                />
-              </LocalizationProvider>
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                <DatePicker
-                  label="Data Fim"
-                  value={dataFim}
-                  onChange={(newValue) => {
-                    setDataFim(newValue);
-                  }}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      variant: "outlined"
-                    }
-                  }}
-                  format="dd/MM/yyyy"
-                />
-              </LocalizationProvider>
-            </Grid>
-            <Grid item xs={12} sm={2}>
-              <Button 
-                variant="contained" 
-                color="primary" 
-                type="submit"
-                disabled={loading}
-                fullWidth
-              >
-                Buscar
-              </Button>
-            </Grid>
-          </Grid>
-        </form>
-      </Paper>
-      {tab === 0 && !loading && (
-        <Box>
-          <Typography variant="h5" gutterBottom>
-            Histórico de Chuvas - {cidade}/{estado}
-          </Typography>
-          <Diagnostico nome="Histórico de Chuvas" dados={chuvas} erro={error} />
-          {chuvas && chuvas.length > 0 ? (
-            <>
-              <Grid container spacing={3} sx={{ mb: 3 }}>
-                <Grid item xs={12} sm={4}>
-                  <Paper sx={{ p: 2, textAlign: 'center' }}>
-                    <Typography variant="h6" gutterBottom>Total</Typography>
-                    <Typography variant="h4">{estatisticasChuvas.total} mm</Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Paper sx={{ p: 2, textAlign: 'center' }}>
-                    <Typography variant="h6" gutterBottom>Média Diária</Typography>
-                    <Typography variant="h4">{estatisticasChuvas.media} mm</Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Paper sx={{ p: 2, textAlign: 'center' }}>
-                    <Typography variant="h6" gutterBottom>Máxima</Typography>
-                    <Typography variant="h4">{estatisticasChuvas.maxima} mm</Typography>
-                  </Paper>
-                </Grid>
-              </Grid>
-              <Paper sx={{ p: 2, mb: 3 }}>
-                <Typography variant="h6" gutterBottom>Precipitação Diária (mm)</Typography>
-                <Box sx={{ height: 400 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={chuvas}
-                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="data" 
-                        tickFormatter={(tick) => {
-                          const date = new Date(tick);
-                          return `${date.getDate()}/${date.getMonth() + 1}`;
-                        }}
-                      />
-                      <YAxis />
-                      <Tooltip 
-                        formatter={(value) => [`${value} mm`, 'Precipitação']}
-                        labelFormatter={(label) => {
-                          const date = new Date(label);
-                          return format(date, 'dd/MM/yyyy');
-                        }}
-                      />
-                      <Legend />
-                      <Line 
-                        type="monotone" 
-                        dataKey="precipitacao" 
-                        stroke="#1976d2" 
-                        name="Precipitação (mm)" 
-                        activeDot={{ r: 8 }} 
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </Box>
-              </Paper>
-            </>
-          ) : null}
+
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+          <CircularProgress />
         </Box>
-      )}
-      {tab === 1 && !loading && (
-        <Box>
-          <Typography variant="h5" gutterBottom>
-            Histórico de Alagamentos - {cidade}/{estado}
-          </Typography>
-          <Diagnostico nome="Histórico de Alagamentos" dados={alagamentos} erro={error} />
-          {alagamentos && alagamentos.length > 0 ? (
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <Paper sx={{ p: 2, fontFamily: 'Neue Haas Grotesk, Arial, sans-serif' }}>
-                  <Typography variant="h6" gutterBottom>
-                    Ocorrências Registradas: {alagamentos.length}
-                  </Typography>
-                  {alagamentos.map((alagamento, index) => (
-                    <Paper 
-                      key={index} 
+      ) : error ? (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {error}
+        </Alert>
+      ) : chuvas.length > 0 ? (
+        <>
+          <Paper sx={{ p: 3, mb: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Estatísticas do Período
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={4}>
+                <Typography variant="subtitle1">
+                  Precipitação Total: {estatisticasChuvas.total} mm
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Typography variant="subtitle1">
+                  Média Diária: {estatisticasChuvas.media} mm
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Typography variant="subtitle1">
+                  Máxima Registrada: {estatisticasChuvas.maxima} mm
+                </Typography>
+              </Grid>
+            </Grid>
+          </Paper>
+
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Data</TableCell>
+                  <TableCell align="right">Precipitação (mm)</TableCell>
+                  <TableCell>Alagamento</TableCell>
+                  <TableCell>Detalhes</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {chuvas.map((chuva) => {
+                  const alagamentosDoDia = alagamentos.filter(
+                    a => format(new Date(a.data), 'yyyy-MM-dd') === format(new Date(chuva.data), 'yyyy-MM-dd')
+                  );
+                  return (
+                    <TableRow 
+                      key={chuva.data}
                       sx={{ 
-                        p: 2, 
-                        my: 2, 
-                        bgcolor: 
-                          alagamento.nivelGravidade === 'alto' ? '#ffebee' : 
-                          alagamento.nivelGravidade === 'médio' ? '#fff8e1' : '#e8f5e9',
-                        fontFamily: 'Neue Haas Grotesk, Arial, sans-serif'
+                        bgcolor: alagamentosDoDia.length > 0 ? '#fff3e0' : 'inherit',
+                        '&:hover': { bgcolor: alagamentosDoDia.length > 0 ? '#ffe0b2' : '#f5f5f5' }
                       }}
                     >
-                      <Typography variant="h6">
-                        {new Date(alagamento.data).toLocaleDateString('pt-BR')}
-                      </Typography>
-                      <Typography variant="body1">
-                        Local: {alagamento.local}
-                      </Typography>
-                      <Typography variant="body2">
-                        Nível de gravidade: {alagamento.nivelGravidade.toUpperCase()}
-                      </Typography>
-                      <Typography variant="body2">
-                        Pessoas afetadas: {alagamento.afetados}
-                      </Typography>
-                    </Paper>
-                  ))}
-                </Paper>
-              </Grid>
-            </Grid>
-          ) : null}
-        </Box>
+                      <TableCell>{format(new Date(chuva.data), 'dd/MM/yyyy')}</TableCell>
+                      <TableCell align="right">{chuva.precipitacao.toFixed(1)}</TableCell>
+                      <TableCell>
+                        {alagamentosDoDia.length > 0 ? (
+                          <Chip 
+                            label="Sim" 
+                            color="warning" 
+                            size="small"
+                            icon={<WarningIcon />}
+                          />
+                        ) : (
+                          <Chip 
+                            label="Não" 
+                            color="success" 
+                            size="small"
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {alagamentosDoDia.length > 0 && (
+                          <Box>
+                            <Typography variant="body2" color="warning.dark">
+                              Nível: {alagamentosDoDia[0].nivelAlagamento}
+                            </Typography>
+                            {alagamentosDoDia[0].areasAfetadas && (
+                              <Typography variant="body2">
+                                Áreas: {alagamentosDoDia[0].areasAfetadas.join(', ')}
+                              </Typography>
+                            )}
+                          </Box>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </>
+      ) : (
+        <Alert severity="info" sx={{ mt: 2 }}>
+          Nenhum dado histórico encontrado para o período selecionado.
+        </Alert>
       )}
     </Container>
   );

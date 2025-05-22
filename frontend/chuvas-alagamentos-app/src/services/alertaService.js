@@ -43,99 +43,77 @@ export const getDadosAlerta = async (cidade, estado) => {
 };
 
 // Obter previsão de chuvas
-export const getPrevisaoChuvas = async (cidade, estado, dias = 7) => {
+export const getPrevisaoChuvas = async (cidade, estado) => {
   try {
-    if (!cidade || !estado) {
-      throw new Error('Cidade e estado são obrigatórios');
-    }
-
-    console.log('Buscando previsão de chuvas:', { cidade, estado, dias });
-    const response = await axios.get(
-      `${API_URL}/previsao/chuvas?cidade=${encodeURIComponent(cidade)}&estado=${encodeURIComponent(estado)}&dias=${dias}`
-    );
-    console.log('Resposta da API (chuvas):', response.data);
-    return validarResposta(response.data, 'chuvas');
+    const response = await axios.get(`${API_URL}/previsao/chuvas`, {
+      params: { cidade, estado }
+    });
+    return response.data;
   } catch (error) {
     console.error('Erro ao buscar previsão de chuvas:', error);
-    throw new Error(error.response?.data?.message || 'Erro ao buscar previsão de chuvas');
+    throw new Error('Não foi possível obter a previsão de chuvas');
   }
 };
 
 // Obter previsão de alagamentos
-export const getPrevisaoAlagamentos = async (cidade, estado, dias = 7) => {
+export const getPrevisaoAlagamentos = async (cidade, estado) => {
   try {
-    if (!cidade || !estado) {
-      throw new Error('Cidade e estado são obrigatórios');
-    }
-
-    console.log('Buscando previsão de alagamentos:', { cidade, estado, dias });
-    const response = await axios.get(
-      `${API_URL}/previsao/alagamentos?cidade=${encodeURIComponent(cidade)}&estado=${encodeURIComponent(estado)}&dias=${dias}`
-    );
-    console.log('Resposta da API (alagamentos):', response.data);
-    return validarResposta(response.data, 'alagamentos');
+    const response = await axios.get(`${API_URL}/previsao/alagamentos`, {
+      params: { cidade, estado }
+    });
+    return response.data;
   } catch (error) {
     console.error('Erro ao buscar previsão de alagamentos:', error);
-    throw new Error(error.response?.data?.message || 'Erro ao buscar previsão de alagamentos');
+    throw new Error('Não foi possível obter a previsão de alagamentos');
   }
 };
 
 // Obter histórico de chuvas
-export const getHistoricoChuvas = async (cidade, estado, inicio, fim) => {
+export const getHistoricoChuvas = async (cidade, estado, dataInicial, dataFinal) => {
   try {
-    if (!cidade || !estado) {
-      throw new Error('Cidade e estado são obrigatórios');
-    }
-
-    const params = new URLSearchParams();
-    params.append('cidade', cidade);
-    params.append('estado', estado);
-    if (inicio) params.append('dataInicio', inicio);
-    if (fim) params.append('dataFim', fim);
-    
-    console.log('Buscando histórico de chuvas:', { cidade, estado, inicio, fim });
-    const response = await axios.get(`${API_URL}/historico/chuvas?${params.toString()}`);
-    console.log('Resposta da API (histórico chuvas):', response.data);
-    return validarResposta(response.data, 'chuvas');
+    const response = await axios.get(`${API_URL}/historico/chuvas`, {
+      params: { cidade, estado, dataInicial, dataFinal }
+    });
+    return response.data;
   } catch (error) {
     console.error('Erro ao buscar histórico de chuvas:', error);
-    throw new Error(error.response?.data?.message || 'Erro ao buscar histórico de chuvas');
+    throw new Error('Não foi possível obter o histórico de chuvas');
   }
 };
 
 // Obter histórico de alagamentos
-export const getHistoricoAlagamentos = async (cidade, estado, inicio, fim) => {
+export const getHistoricoAlagamentos = async (cidade, estado, dataInicial, dataFinal) => {
   try {
-    if (!cidade || !estado) {
-      throw new Error('Cidade e estado são obrigatórios');
-    }
-
-    const params = new URLSearchParams();
-    params.append('cidade', cidade);
-    params.append('estado', estado);
-    if (inicio) params.append('dataInicio', inicio);
-    if (fim) params.append('dataFim', fim);
-    
-    console.log('Buscando histórico de alagamentos:', { cidade, estado, inicio, fim });
-    const response = await axios.get(`${API_URL}/historico/alagamentos?${params.toString()}`);
-    console.log('Resposta da API (histórico alagamentos):', response.data);
-    return validarResposta(response.data, 'alagamentos');
+    const response = await axios.get(`${API_URL}/historico/alagamentos`, {
+      params: { cidade, estado, dataInicial, dataFinal }
+    });
+    return response.data;
   } catch (error) {
     console.error('Erro ao buscar histórico de alagamentos:', error);
-    throw new Error(error.response?.data?.message || 'Erro ao buscar histórico de alagamentos');
+    throw new Error('Não foi possível obter o histórico de alagamentos');
   }
 };
 
 // Obter lista de municípios
-export const getMunicipios = async () => {
+export const getMunicipios = async (estado) => {
   try {
-    console.log('Buscando lista de municípios');
-    const response = await axios.get(`${API_URL}/municipios`);
-    console.log('Resposta da API (municipios):', response.data);
-    return validarResposta(response.data, 'municipios');
+    const response = await axios.get(`${API_URL}/municipios`, {
+      params: { estado }
+    });
+    return response.data;
   } catch (error) {
-    console.error('Erro ao buscar lista de municípios:', error);
-    throw new Error(error.response?.data?.message || 'Erro ao buscar lista de municípios');
+    console.error('Erro ao buscar municípios:', error);
+    throw new Error('Não foi possível obter a lista de municípios');
+  }
+};
+
+export const getEstados = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/estados`);
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao buscar estados:', error);
+    throw new Error('Não foi possível obter a lista de estados');
   }
 };
 
@@ -145,5 +123,6 @@ export default {
   getPrevisaoAlagamentos,
   getHistoricoChuvas,
   getHistoricoAlagamentos,
-  getMunicipios
+  getMunicipios,
+  getEstados
 }; 

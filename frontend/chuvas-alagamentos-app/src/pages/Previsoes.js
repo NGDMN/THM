@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Box, Grid, Paper, Alert, CircularProgress, Tabs, Tab, TextField, Autocomplete } from '@mui/material';
+import { Container, Typography, Box, Grid, Paper, Alert, CircularProgress, Tabs, Tab, TextField, Autocomplete, FormControl, InputLabel, Select, MenuItem, Tooltip } from '@mui/material';
 import { getPrevisaoChuvas, getPrevisaoAlagamentos, getMunicipios } from '../services/alertaService';
 import { useNavigate } from 'react-router-dom';
 import Diagnostico from '../components/Diagnostico';
+import WarningIcon from '@mui/icons-material/Warning';
+import { format } from 'date-fns';
 
 const estados = [
   { sigla: 'RJ', nome: 'Rio de Janeiro' },
@@ -139,163 +141,107 @@ const Previsoes = () => {
     );
   }
 
+  const previsoes = [...chuvas, ...alagamentos];
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
       <Typography variant="h4" component="h1" gutterBottom>
         Previsões para {cidade} - {estado}
       </Typography>
-      
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-        <Autocomplete
-          value={estados.find(e => e.sigla === estado) || null}
-          onChange={(event, newValue) => {
-            if (newValue) {
-              setEstado(newValue.sigla);
-              if (municipios[newValue.sigla]?.length > 0) {
-                setCidade(municipios[newValue.sigla][0]);
-              } else {
-                setCidade('');
-              }
-            }
-          }}
-          options={estados}
-          getOptionLabel={(option) => `${option.nome} (${option.sigla})`}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Estado"
-              sx={{ minWidth: 180 }}
-            />
-          )}
-        />
-        
-        <Autocomplete
-          value={cidade}
-          onChange={(event, newValue) => {
-            setCidade(newValue || '');
-          }}
-          options={municipios[estado] || []}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Cidade"
-              sx={{ minWidth: 220 }}
-            />
-          )}
-          disabled={!estado || !municipios[estado]?.length}
-        />
-      </Box>
-
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={tab} onChange={handleChangeTab}>
-          <Tab label="Chuvas" />
-          <Tab label="Alagamentos" />
-        </Tabs>
+        <FormControl sx={{ minWidth: 180 }}>
+          <InputLabel id="estado-label">Estado</InputLabel>
+          <Select
+            labelId="estado-label"
+            value={estado}
+            label="Estado"
+            onChange={handleEstadoChange}
+          >
+            {estados.map((est) => (
+              <MenuItem key={est.sigla} value={est.sigla}>{est.nome}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl sx={{ minWidth: 220 }}>
+          <InputLabel id="cidade-label">Cidade</InputLabel>
+          <Select
+            labelId="cidade-label"
+            value={cidade}
+            label="Cidade"
+            onChange={handleCidadeChange}
+          >
+            {municipios[estado]?.map((cid) => (
+              <MenuItem key={cid} value={cid}>{cid}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </Box>
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
           <CircularProgress />
         </Box>
+      ) : error ? (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {error}
+        </Alert>
       ) : (
-        <>
-          {tab === 0 && (
-            <Box>
-              <Typography variant="h5" gutterBottom>
-                Previsão de Chuvas - {cidade}/{estado}
-              </Typography>
-              <Diagnostico nome="Previsão de Chuvas" dados={chuvas} erro={error} />
-              {Array.isArray(chuvas) && chuvas.length > 0 ? (
-                <Grid container spacing={2}>
-                  {chuvas.map((previsao, index) => (
-                    <Grid item xs={12} sm={6} md={4} key={index}>
-                      <Paper 
-                        sx={{ 
-                          p: 2, 
-                          display: 'flex', 
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          bgcolor: previsao.precipitacao >= 30 ? 'error.light' : 
-                                   previsao.precipitacao >= 15 ? 'warning.light' : 
-                                   'success.light'
-                        }}
-                      >
-                        <Typography variant="h6">{previsao.data}</Typography>
-                        <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
-                          {previsao.precipitacao} mm
-                        </Typography>
-                        {previsao.precipitacao >= 30 && (
-                          <Alert severity="error" sx={{ mt: 2 }}>
-                            Risco de alagamento!
-                          </Alert>
-                        )}
-                      </Paper>
-                    </Grid>
-                  ))}
-                </Grid>
-              ) : null}
-            </Box>
-          )}
+        <Grid container spacing={3}>
+          {previsoes.map((previsao, index) => (
+            <Grid item xs={12} md={6} lg={4} key={index}>
+              <Paper 
+                sx={{ 
+                  p: 2,
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  position: 'relative',
+                  bgcolor: previsao.riscoAlagamento ? '#fff3e0' : 'background.paper'
+                }}
+              >
+                <Typography variant="h6" gutterBottom>
+                  {format(new Date(previsao.data), 'dd/MM/yyyy')}
+                </Typography>
+                
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h4" sx={{ mr: 2 }}>
+                    {previsao.precipitacao.toFixed(1)} mm
+                  </Typography>
+                  {previsao.riscoAlagamento && (
+                    <Tooltip title="Risco de Alagamento">
+                      <WarningIcon color="warning" />
+                    </Tooltip>
+                  )}
+                </Box>
 
-          {tab === 1 && (
-            <Box>
-              <Typography variant="h5" gutterBottom>
-                Previsão de Alagamentos - {cidade}/{estado}
-              </Typography>
-              <Diagnostico nome="Previsão de Alagamentos" dados={alagamentos} erro={error} />
-              {alagamentos && alagamentos.length > 0 ? (
-                <Grid container spacing={2}>
-                  {alagamentos.map((alagamento, index) => (
-                    <Grid item xs={12} sm={6} md={4} key={index}>
-                      <Paper 
-                        sx={{ 
-                          p: 2,
-                          bgcolor: alagamento.nivelRisco === 'alto' ? '#ffebee' : 
-                                   alagamento.nivelRisco === 'médio' ? '#fff8e1' : '#e8f5e9'
-                        }}
-                      >
-                        <Typography variant="h6">
-                          Nível de Risco: {(alagamento.nivelRisco || 'desconhecido').toUpperCase()}
+                {previsao.riscoAlagamento && (
+                  <Box sx={{ mt: 2, p: 2, bgcolor: '#fff3e0', borderRadius: 1 }}>
+                    <Typography variant="subtitle2" color="warning.dark" gutterBottom>
+                      Risco de Alagamento
+                    </Typography>
+                    <Typography variant="body2">
+                      Probabilidade: {previsao.probabilidadeAlagamento}%
+                    </Typography>
+                    {previsao.recomendacoes && (
+                      <Box sx={{ mt: 1 }}>
+                        <Typography variant="subtitle2" gutterBottom>
+                          Recomendações:
                         </Typography>
-                        <Typography variant="body1" sx={{ mt: 2 }}>
-                          Probabilidade: {alagamento.probabilidade || 0}%
-                        </Typography>
-                        {alagamento.areasAfetadas && alagamento.areasAfetadas.length > 0 && (
-                          <Box sx={{ mt: 2 }}>
-                            <Typography variant="subtitle1" gutterBottom>
-                              Áreas Afetadas:
-                            </Typography>
-                            <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                              {alagamento.areasAfetadas.map((area, idx) => (
-                                <li key={idx}>
-                                  <Typography variant="body2">{area}</Typography>
-                                </li>
-                              ))}
-                            </ul>
-                          </Box>
-                        )}
-                        {alagamento.recomendacoes && alagamento.recomendacoes.length > 0 && (
-                          <Box sx={{ mt: 2 }}>
-                            <Typography variant="subtitle1" gutterBottom>
-                              Recomendações:
-                            </Typography>
-                            <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                              {alagamento.recomendacoes.map((rec, idx) => (
-                                <li key={idx}>
-                                  <Typography variant="body2">{rec}</Typography>
-                                </li>
-                              ))}
-                            </ul>
-                          </Box>
-                        )}
-                      </Paper>
-                    </Grid>
-                  ))}
-                </Grid>
-              ) : null}
-            </Box>
-          )}
-        </>
+                        <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
+                          {previsao.recomendacoes.map((rec, idx) => (
+                            <li key={idx}>
+                              <Typography variant="body2">{rec}</Typography>
+                            </li>
+                          ))}
+                        </ul>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
       )}
     </Container>
   );
