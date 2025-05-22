@@ -83,7 +83,9 @@ const Previsoes = () => {
         }
         
         if (dadosAlagamentos && typeof dadosAlagamentos === 'object') {
-          setAlagamentos([dadosAlagamentos]);
+          // Garantir que dadosAlagamentos seja sempre um array
+          const alagamentosArray = Array.isArray(dadosAlagamentos) ? dadosAlagamentos : [dadosAlagamentos];
+          setAlagamentos(alagamentosArray);
         } else {
           console.error('Dados de alagamentos em formato inválido:', dadosAlagamentos);
           setAlagamentos([]);
@@ -231,11 +233,7 @@ const Previsoes = () => {
                     </Grid>
                   ))}
                 </Grid>
-              ) : (
-                <Alert severity="info">
-                  Nenhuma previsão disponível para o período selecionado
-                </Alert>
-              )}
+              ) : null}
             </Box>
           )}
 
@@ -257,10 +255,10 @@ const Previsoes = () => {
                         }}
                       >
                         <Typography variant="h6">
-                          Nível de Risco: {alagamento.nivelRisco.toUpperCase()}
+                          Nível de Risco: {(alagamento.nivelRisco || 'desconhecido').toUpperCase()}
                         </Typography>
                         <Typography variant="body1" sx={{ mt: 2 }}>
-                          Probabilidade: {alagamento.probabilidade}%
+                          Probabilidade: {alagamento.probabilidade || 0}%
                         </Typography>
                         {alagamento.areasAfetadas && alagamento.areasAfetadas.length > 0 && (
                           <Box sx={{ mt: 2 }}>
@@ -294,11 +292,7 @@ const Previsoes = () => {
                     </Grid>
                   ))}
                 </Grid>
-              ) : (
-                <Alert severity="info">
-                  Nenhuma previsão de alagamento disponível
-                </Alert>
-              )}
+              ) : null}
             </Box>
           )}
         </>
