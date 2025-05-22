@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import Diagnostico from '../components/Diagnostico';
 import { List, ListItem, ListItemText } from '@mui/material';
 import { WarningAmber } from '@mui/icons-material';
-import { TableContainer, Table, TableHead, TableBody, TableRow } from '@mui/material';
+import { TableContainer, Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
 
 // Componente para gráfico de linha simples
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
