@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Typography, Box, Grid, Paper, Alert, CircularProgress, Tabs, Tab, TextField, Autocomplete } from '@mui/material';
 import { getPrevisaoChuvas, getPrevisaoAlagamentos, getMunicipios } from '../services/alertaService';
 import { useNavigate } from 'react-router-dom';
+import Diagnostico from '../components/Diagnostico';
 
 const estados = [
   { sigla: 'RJ', nome: 'Rio de Janeiro' },
@@ -62,6 +63,7 @@ const Previsoes = () => {
       
       try {
         setLoading(true);
+        setError(null);
         console.log('Buscando previsões para:', { cidade, estado });
         
         const [dadosChuvas, dadosAlagamentos] = await Promise.all([
@@ -77,6 +79,7 @@ const Previsoes = () => {
         } else {
           console.error('Dados de chuvas em formato inválido:', dadosChuvas);
           setChuvas([]);
+          setError('Formato de dados de chuvas inválido');
         }
         
         if (dadosAlagamentos && typeof dadosAlagamentos === 'object') {
@@ -84,12 +87,11 @@ const Previsoes = () => {
         } else {
           console.error('Dados de alagamentos em formato inválido:', dadosAlagamentos);
           setAlagamentos([]);
+          setError('Formato de dados de alagamentos inválido');
         }
-        
-        setError(null);
       } catch (err) {
         console.error('Erro ao carregar previsões:', err);
-        setError('Não foi possível carregar as previsões');
+        setError(err.message || 'Não foi possível carregar as previsões');
         setChuvas([]);
         setAlagamentos([]);
       } finally {
@@ -200,6 +202,7 @@ const Previsoes = () => {
               <Typography variant="h5" gutterBottom>
                 Previsão de Chuvas - {cidade}/{estado}
               </Typography>
+              <Diagnostico nome="Previsão de Chuvas" dados={chuvas} erro={error} />
               {Array.isArray(chuvas) && chuvas.length > 0 ? (
                 <Grid container spacing={2}>
                   {chuvas.map((previsao, index) => (
@@ -241,6 +244,7 @@ const Previsoes = () => {
               <Typography variant="h5" gutterBottom>
                 Previsão de Alagamentos - {cidade}/{estado}
               </Typography>
+              <Diagnostico nome="Previsão de Alagamentos" dados={alagamentos} erro={error} />
               {alagamentos && alagamentos.length > 0 ? (
                 <Grid container spacing={2}>
                   {alagamentos.map((alagamento, index) => (

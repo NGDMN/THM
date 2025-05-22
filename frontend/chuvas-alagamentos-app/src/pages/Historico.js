@@ -6,6 +6,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { getHistoricoChuvas, getHistoricoAlagamentos, getMunicipios } from '../services/alertaService';
 import { format } from 'date-fns';
+import Diagnostico from '../components/Diagnostico';
 
 // Componente para gráfico de linha simples
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -123,6 +124,11 @@ const Historico = () => {
 
   const estatisticasChuvas = calcularEstatisticas();
 
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    await handleBuscar();
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
@@ -184,61 +190,64 @@ const Historico = () => {
         </Tabs>
       </Box>
       <Paper sx={{ p: 2, mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={3}>
-            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-              <DatePicker
-                label="Data Início"
-                value={dataInicio}
-                onChange={(newValue) => {
-                  setDataInicio(newValue);
-                }}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    variant: "outlined"
-                  }
-                }}
-                format="dd/MM/yyyy"
-              />
-            </LocalizationProvider>
+        <form onSubmit={handleSubmit}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm={3}>
+              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                <DatePicker
+                  label="Data Início"
+                  value={dataInicio}
+                  onChange={(newValue) => {
+                    setDataInicio(newValue);
+                  }}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      variant: "outlined"
+                    }
+                  }}
+                  format="dd/MM/yyyy"
+                />
+              </LocalizationProvider>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                <DatePicker
+                  label="Data Fim"
+                  value={dataFim}
+                  onChange={(newValue) => {
+                    setDataFim(newValue);
+                  }}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      variant: "outlined"
+                    }
+                  }}
+                  format="dd/MM/yyyy"
+                />
+              </LocalizationProvider>
+            </Grid>
+            <Grid item xs={12} sm={2}>
+              <Button 
+                variant="contained" 
+                color="primary" 
+                type="submit"
+                disabled={loading}
+                fullWidth
+              >
+                Buscar
+              </Button>
+            </Grid>
           </Grid>
-          <Grid item xs={12} sm={3}>
-            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-              <DatePicker
-                label="Data Fim"
-                value={dataFim}
-                onChange={(newValue) => {
-                  setDataFim(newValue);
-                }}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    variant: "outlined"
-                  }
-                }}
-                format="dd/MM/yyyy"
-              />
-            </LocalizationProvider>
-          </Grid>
-          <Grid item xs={12} sm={2}>
-            <Button 
-              variant="contained" 
-              color="primary" 
-              onClick={handleBuscar}
-              disabled={loading}
-              fullWidth
-            >
-              Buscar
-            </Button>
-          </Grid>
-        </Grid>
+        </form>
       </Paper>
       {tab === 0 && !loading && (
         <Box>
           <Typography variant="h5" gutterBottom>
             Histórico de Chuvas - {cidade}/{estado}
           </Typography>
+          <Diagnostico nome="Histórico de Chuvas" dados={chuvas} erro={error} />
           {chuvas && chuvas.length > 0 ? (
             <>
               <Grid container spacing={3} sx={{ mb: 3 }}>
@@ -298,20 +307,15 @@ const Historico = () => {
                 </Box>
               </Paper>
             </>
-          ) : (
-            <Alert 
-              severity="info"
-            >
-              Nenhum dado encontrado para o período selecionado
-            </Alert>
-          )}
+          ) : null}
         </Box>
       )}
       {tab === 1 && !loading && (
         <Box>
-          <Typography variant="h5" gutterBottom sx={{ color: '#1B4F72', fontFamily: 'Neue Haas Grotesk, Arial, sans-serif', fontWeight: 600 }}>
+          <Typography variant="h5" gutterBottom>
             Histórico de Alagamentos - {cidade}/{estado}
           </Typography>
+          <Diagnostico nome="Histórico de Alagamentos" dados={alagamentos} erro={error} />
           {alagamentos && alagamentos.length > 0 ? (
             <Grid container spacing={2}>
               <Grid item xs={12}>
@@ -348,9 +352,7 @@ const Historico = () => {
                 </Paper>
               </Grid>
             </Grid>
-          ) : (
-            <Alert severity="info">Nenhum alagamento registrado para o período selecionado</Alert>
-          )}
+          ) : null}
         </Box>
       )}
     </Container>
