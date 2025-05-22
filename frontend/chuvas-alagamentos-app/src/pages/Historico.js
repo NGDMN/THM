@@ -34,14 +34,16 @@ const Historico = () => {
   useEffect(() => {
     const fetchMunicipios = async () => {
       try {
-        const dados = await getMunicipios();
-        const municipiosPorEstado = dados.reduce((acc, municipio) => {
-          if (!acc[municipio.uf]) {
-            acc[municipio.uf] = [];
+        const dados = await getMunicipios(estado);
+        const municipiosPorEstado = Array.isArray(dados) ? dados.reduce((acc, municipio) => {
+          if (municipio.uf && municipio.nome) {
+            if (!acc[municipio.uf]) {
+              acc[municipio.uf] = [];
+            }
+            acc[municipio.uf].push(municipio.nome);
           }
-          acc[municipio.uf].push(municipio.nome);
           return acc;
-        }, {});
+        }, {}) : {};
         setMunicipios(municipiosPorEstado);
         if (municipiosPorEstado[estado]?.length > 0) {
           setCidade(municipiosPorEstado[estado][0]);
@@ -52,7 +54,7 @@ const Historico = () => {
       }
     };
     fetchMunicipios();
-  }, []);
+  }, [estado]);
 
   const handleBuscar = async () => {
     try {

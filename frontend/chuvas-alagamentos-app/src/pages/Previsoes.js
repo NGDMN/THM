@@ -76,23 +76,10 @@ const Previsoes = () => {
         console.log('Dados de chuvas recebidos:', dadosChuvas);
         console.log('Dados de alagamentos recebidos:', dadosAlagamentos);
         
-        if (Array.isArray(dadosChuvas)) {
-          setChuvas(dadosChuvas);
-        } else {
-          console.error('Dados de chuvas em formato inválido:', dadosChuvas);
-          setChuvas([]);
-          setError('Formato de dados de chuvas inválido');
-        }
-        
-        if (dadosAlagamentos && typeof dadosAlagamentos === 'object') {
-          // Garantir que dadosAlagamentos seja sempre um array
-          const alagamentosArray = Array.isArray(dadosAlagamentos) ? dadosAlagamentos : [dadosAlagamentos];
-          setAlagamentos(alagamentosArray);
-        } else {
-          console.error('Dados de alagamentos em formato inválido:', dadosAlagamentos);
-          setAlagamentos([]);
-          setError('Formato de dados de alagamentos inválido');
-        }
+        const chuvasArray = Array.isArray(dadosChuvas) ? dadosChuvas : [];
+        const alagamentosArray = Array.isArray(dadosAlagamentos) ? dadosAlagamentos : (dadosAlagamentos ? [dadosAlagamentos] : []);
+        setChuvas(chuvasArray);
+        setAlagamentos(alagamentosArray);
       } catch (err) {
         console.error('Erro ao carregar previsões:', err);
         setError(err.message || 'Não foi possível carregar as previsões');
@@ -141,7 +128,8 @@ const Previsoes = () => {
     );
   }
 
-  const previsoes = [...chuvas, ...alagamentos];
+  const chuvasArray = Array.isArray(chuvas) ? chuvas : [];
+  const alagamentosArray = Array.isArray(alagamentos) ? alagamentos : (alagamentos ? [alagamentos] : []);
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
@@ -187,7 +175,12 @@ const Previsoes = () => {
         </Alert>
       ) : (
         <Grid container spacing={3}>
-          {previsoes.map((previsao, index) => (
+          {chuvasArray.length === 0 && alagamentosArray.length === 0 && (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              Nenhuma previsão disponível para o período selecionado.
+            </Alert>
+          )}
+          {chuvasArray.map((previsao, index) => (
             <Grid item xs={12} md={6} lg={4} key={index}>
               <Paper 
                 sx={{ 
