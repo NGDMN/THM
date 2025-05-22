@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Typography, Box, Grid, Paper, Alert, CircularProgress, Tabs, Tab, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import { Container, Typography, Box, Grid, Paper, Alert, CircularProgress, Tabs, Tab, TextField, Autocomplete } from '@mui/material';
 import { getPrevisaoChuvas, getPrevisaoAlagamentos, getMunicipios } from '../services/alertaService';
 import { useNavigate } from 'react-router-dom';
 
@@ -17,6 +17,7 @@ const Previsoes = () => {
   const [estado, setEstado] = useState('RJ');
   const [cidade, setCidade] = useState('');
   const [municipios, setMunicipios] = useState({});
+  const [municipiosLista, setMunicipiosLista] = useState([]);
   const navigate = useNavigate();
 
   // Carregar lista de municípios
@@ -38,6 +39,8 @@ const Previsoes = () => {
         }, {});
         
         setMunicipios(municipiosPorEstado);
+        setMunicipiosLista(dados);
+        
         if (municipiosPorEstado[estado]?.length > 0) {
           setCidade(municipiosPorEstado[estado][0]);
         }
@@ -59,10 +62,15 @@ const Previsoes = () => {
       
       try {
         setLoading(true);
+        console.log('Buscando previsões para:', { cidade, estado });
+        
         const [dadosChuvas, dadosAlagamentos] = await Promise.all([
           getPrevisaoChuvas(cidade, estado),
           getPrevisaoAlagamentos(cidade, estado)
         ]);
+        
+        console.log('Dados de chuvas recebidos:', dadosChuvas);
+        console.log('Dados de alagamentos recebidos:', dadosAlagamentos);
         
         if (Array.isArray(dadosChuvas)) {
           setChuvas(dadosChuvas);
@@ -71,9 +79,7 @@ const Previsoes = () => {
           setChuvas([]);
         }
         
-        // Tratamento específico para dados de alagamentos
         if (dadosAlagamentos && typeof dadosAlagamentos === 'object') {
-          // Se for um único objeto, converte para array com um item
           setAlagamentos([dadosAlagamentos]);
         } else {
           console.error('Dados de alagamentos em formato inválido:', dadosAlagamentos);
@@ -136,33 +142,44 @@ const Previsoes = () => {
       </Typography>
       
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-        <FormControl sx={{ minWidth: 180 }}>
-          <InputLabel id="estado-label">Estado</InputLabel>
-          <Select
-            labelId="estado-label"
-            value={estado}
-            label="Estado"
-            onChange={handleEstadoChange}
-          >
-            {estados.map((est) => (
-              <MenuItem key={est.sigla} value={est.sigla}>{est.nome}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Autocomplete
+          value={estados.find(e => e.sigla === estado) || null}
+          onChange={(event, newValue) => {
+            if (newValue) {
+              setEstado(newValue.sigla);
+              if (municipios[newValue.sigla]?.length > 0) {
+                setCidade(municipios[newValue.sigla][0]);
+              } else {
+                setCidade('');
+              }
+            }
+          }}
+          options={estados}
+          getOptionLabel={(option) => `${option.nome} (${option.sigla})`}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Estado"
+              sx={{ minWidth: 180 }}
+            />
+          )}
+        />
         
-        <FormControl sx={{ minWidth: 220 }}>
-          <InputLabel id="cidade-label">Cidade</InputLabel>
-          <Select
-            labelId="cidade-label"
-            value={cidade}
-            label="Cidade"
-            onChange={handleCidadeChange}
-          >
-            {municipios[estado]?.map((cid) => (
-              <MenuItem key={cid} value={cid}>{cid}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Autocomplete
+          value={cidade}
+          onChange={(event, newValue) => {
+            setCidade(newValue || '');
+          }}
+          options={municipios[estado] || []}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Cidade"
+              sx={{ minWidth: 220 }}
+            />
+          )}
+          disabled={!estado || !municipios[estado]?.length}
+        />
       </Box>
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>

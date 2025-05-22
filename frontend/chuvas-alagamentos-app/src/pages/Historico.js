@@ -35,7 +35,7 @@ const Historico = () => {
           if (!acc[municipio.uf]) {
             acc[municipio.uf] = [];
           }
-          acc[municipio.uf].push(municipio.nome);
+          acc[municipios.uf].push(municipio.nome);
           return acc;
         }, {});
         setMunicipios(municipiosPorEstado);
@@ -50,44 +50,42 @@ const Historico = () => {
     fetchMunicipios();
   }, []);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!cidade) return;
-      try {
-        setLoading(true);
-        const dataInicioFormatada = dataInicio ? format(dataInicio, 'yyyy-MM-dd') : format(new Date('2020-01-01'), 'yyyy-MM-dd');
-        const dataFimFormatada = dataFim ? format(dataFim, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
-        const dadosChuvas = await getHistoricoChuvas(cidade, estado, dataInicioFormatada, dataFimFormatada);
-        const dadosAlagamentos = await getHistoricoAlagamentos(cidade, estado, dataInicioFormatada, dataFimFormatada);
-        setChuvas(dadosChuvas);
-        setAlagamentos(dadosAlagamentos);
-        setError(null);
-      } catch (err) {
-        console.error('Erro ao carregar histórico:', err);
-        setError('Não foi possível carregar o histórico');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [cidade, estado, dataInicio, dataFim]);
-
   const handleBuscar = async () => {
     try {
       setLoading(true);
-      const dataInicioFormatada = dataInicio ? format(dataInicio, 'yyyy-MM-dd') : '';
-      const dataFimFormatada = dataFim ? format(dataFim, 'yyyy-MM-dd') : '';
+      setError(null);
+
+      // Validação das datas
+      if (dataInicio && dataFim && dataInicio > dataFim) {
+        setError('A data inicial não pode ser maior que a data final');
+        return;
+      }
+
+      const dataInicioFormatada = dataInicio ? format(dataInicio, 'yyyy-MM-dd') : format(new Date('2020-01-01'), 'yyyy-MM-dd');
+      const dataFimFormatada = dataFim ? format(dataFim, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
+      
       if (tab === 0) {
         const dados = await getHistoricoChuvas(cidade, estado, dataInicioFormatada, dataFimFormatada);
-        setChuvas(dados);
+        if (!dados || dados.length === 0) {
+          setError('Nenhum dado encontrado para o período selecionado');
+          setChuvas([]);
+        } else {
+          setChuvas(dados);
+        }
       } else {
         const dados = await getHistoricoAlagamentos(cidade, estado, dataInicioFormatada, dataFimFormatada);
-        setAlagamentos(dados);
+        if (!dados || dados.length === 0) {
+          setError('Nenhum dado encontrado para o período selecionado');
+          setAlagamentos([]);
+        } else {
+          setAlagamentos(dados);
+        }
       }
-      setError(null);
     } catch (err) {
       console.error('Erro ao carregar histórico:', err);
       setError('Não foi possível carregar os dados históricos');
+      setChuvas([]);
+      setAlagamentos([]);
     } finally {
       setLoading(false);
     }
@@ -192,10 +190,16 @@ const Historico = () => {
               <DatePicker
                 label="Data Início"
                 value={dataInicio}
-                onChange={(newValue) => setDataInicio(newValue)}
-                renderInput={(params) => <TextField {...params} fullWidth />}
-                disableMaskedInput
-                inputFormat="dd/MM/yyyy"
+                onChange={(newValue) => {
+                  setDataInicio(newValue);
+                }}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    variant: "outlined"
+                  }
+                }}
+                format="dd/MM/yyyy"
               />
             </LocalizationProvider>
           </Grid>
@@ -204,10 +208,16 @@ const Historico = () => {
               <DatePicker
                 label="Data Fim"
                 value={dataFim}
-                onChange={(newValue) => setDataFim(newValue)}
-                renderInput={(params) => <TextField {...params} fullWidth />}
-                disableMaskedInput
-                inputFormat="dd/MM/yyyy"
+                onChange={(newValue) => {
+                  setDataFim(newValue);
+                }}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    variant: "outlined"
+                  }
+                }}
+                format="dd/MM/yyyy"
               />
             </LocalizationProvider>
           </Grid>
