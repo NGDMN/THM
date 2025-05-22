@@ -33,6 +33,7 @@ const Historico = () => {
 
   useEffect(() => {
     const fetchMunicipios = async () => {
+      setLoading(true);
       try {
         const dados = await getMunicipios(estado);
         const municipiosPorEstado = Array.isArray(dados) ? dados.reduce((acc, municipio) => {
@@ -48,9 +49,12 @@ const Historico = () => {
         if (municipiosPorEstado[estado]?.length > 0) {
           setCidade(municipiosPorEstado[estado][0]);
         }
+        setError(null);
       } catch (err) {
         console.error('Erro ao carregar municípios:', err);
         setError('Não foi possível carregar a lista de municípios');
+      } finally {
+        setLoading(false);
       }
     };
     fetchMunicipios();
