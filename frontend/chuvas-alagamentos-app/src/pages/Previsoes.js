@@ -3,7 +3,7 @@ import { Container, Typography, Box, Grid, Paper, Alert, CircularProgress, Tabs,
 import { getPrevisaoChuvas, getPrevisaoAlagamentos, getMunicipios } from '../services/alertaService';
 import { useNavigate } from 'react-router-dom';
 import Diagnostico from '../components/Diagnostico';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import WarningAmber from '@mui/icons-material/WarningAmber';
 import { format } from 'date-fns';
 
 const estados = [
@@ -202,7 +202,7 @@ const Previsoes = () => {
                   </Typography>
                   {previsao.riscoAlagamento && (
                     <Tooltip title="Risco de Alagamento">
-                      <WarningAmberIcon color="warning" />
+                      <WarningAmber color="warning" />
                     </Tooltip>
                   )}
                 </Box>

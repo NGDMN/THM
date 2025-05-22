@@ -2,7 +2,7 @@ import React from 'react';
 import { Container, Typography, Box, Button, Grid, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import WarningAmber from '@mui/icons-material/WarningAmber';
 import TimelineIcon from '@mui/icons-material/Timeline';
 
 const Home = () => {
@@ -103,7 +103,7 @@ const Home = () => {
               }
             }}
           >
-            <WarningAmberIcon sx={{ fontSize: 60, color: 'warning.main', mb: 2 }} />
+            <WarningAmber sx={{ fontSize: 60, color: 'warning.main', mb: 2 }} />
             <Typography variant="h5" gutterBottom>
               Alertas
             </Typography>

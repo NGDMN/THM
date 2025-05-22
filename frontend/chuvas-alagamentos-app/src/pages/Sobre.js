@@ -1,7 +1,7 @@
 import React from 'react';
 import { Container, Typography, Paper, Box, Grid } from '@mui/material';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import WarningAmber from '@mui/icons-material/WarningAmber';
 import TimelineIcon from '@mui/icons-material/Timeline';
 
 const Sobre = () => {
@@ -33,7 +33,7 @@ const Sobre = () => {
 
           <Grid item xs={12} md={4}>
             <Box sx={{ textAlign: 'center', p: 2 }}>
-              <WarningAmberIcon sx={{ fontSize: 60, color: 'warning.main', mb: 2 }} />
+              <WarningAmber sx={{ fontSize: 60, color: 'warning.main', mb: 2 }} />
               <Typography variant="h6" gutterBottom>
                 Alertas de Alagamentos
               </Typography>

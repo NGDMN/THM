@@ -8,7 +8,7 @@ import { getHistoricoChuvas, getHistoricoAlagamentos, getMunicipios } from '../s
 import { format } from 'date-fns';
 import Diagnostico from '../components/Diagnostico';
 import { List, ListItem, ListItemText } from '@mui/material';
-import { WarningAmberIcon } from '@mui/icons-material';
+import { WarningAmber } from '@mui/icons-material';
 import { TableContainer, Table, TableHead, TableBody, TableRow } from '@mui/material';
 
 // Componente para gráfico de linha simples
@@ -273,7 +273,7 @@ const Historico = () => {
                             label="Sim" 
                             color="warning" 
                             size="small"
-                            icon={<WarningAmberIcon />}
+                            icon={<WarningAmber />}
                           />
                         ) : (
                           <Chip 
