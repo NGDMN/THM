@@ -194,6 +194,8 @@ const Historico = () => {
                 value={dataInicio}
                 onChange={(newValue) => setDataInicio(newValue)}
                 renderInput={(params) => <TextField {...params} fullWidth />}
+                disableMaskedInput
+                inputFormat="dd/MM/yyyy"
               />
             </LocalizationProvider>
           </Grid>
@@ -204,6 +206,8 @@ const Historico = () => {
                 value={dataFim}
                 onChange={(newValue) => setDataFim(newValue)}
                 renderInput={(params) => <TextField {...params} fullWidth />}
+                disableMaskedInput
+                inputFormat="dd/MM/yyyy"
               />
             </LocalizationProvider>
           </Grid>
