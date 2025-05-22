@@ -71,8 +71,10 @@ const Previsoes = () => {
           setChuvas([]);
         }
         
-        if (Array.isArray(dadosAlagamentos)) {
-          setAlagamentos(dadosAlagamentos);
+        // Tratamento específico para dados de alagamentos
+        if (dadosAlagamentos && typeof dadosAlagamentos === 'object') {
+          // Se for um único objeto, converte para array com um item
+          setAlagamentos([dadosAlagamentos]);
         } else {
           console.error('Dados de alagamentos em formato inválido:', dadosAlagamentos);
           setAlagamentos([]);
@@ -222,29 +224,51 @@ const Previsoes = () => {
               <Typography variant="h5" gutterBottom>
                 Previsão de Alagamentos - {cidade}/{estado}
               </Typography>
-              {Array.isArray(alagamentos) && alagamentos.length > 0 ? (
+              {alagamentos && alagamentos.length > 0 ? (
                 <Grid container spacing={2}>
                   {alagamentos.map((alagamento, index) => (
                     <Grid item xs={12} sm={6} md={4} key={index}>
                       <Paper 
                         sx={{ 
                           p: 2,
-                          bgcolor: alagamento.nivelGravidade === 'alto' ? '#ffebee' : 
-                                   alagamento.nivelGravidade === 'médio' ? '#fff8e1' : '#e8f5e9'
+                          bgcolor: alagamento.nivelRisco === 'alto' ? '#ffebee' : 
+                                   alagamento.nivelRisco === 'médio' ? '#fff8e1' : '#e8f5e9'
                         }}
                       >
                         <Typography variant="h6">
-                          {alagamento.data}
+                          Nível de Risco: {alagamento.nivelRisco.toUpperCase()}
                         </Typography>
-                        <Typography variant="body1">
-                          Local: {alagamento.local}
-                        </Typography>
-                        <Typography variant="body2">
-                          Nível de gravidade: {alagamento.nivelGravidade.toUpperCase()}
-                        </Typography>
-                        <Typography variant="body2">
+                        <Typography variant="body1" sx={{ mt: 2 }}>
                           Probabilidade: {alagamento.probabilidade}%
                         </Typography>
+                        {alagamento.areasAfetadas && alagamento.areasAfetadas.length > 0 && (
+                          <Box sx={{ mt: 2 }}>
+                            <Typography variant="subtitle1" gutterBottom>
+                              Áreas Afetadas:
+                            </Typography>
+                            <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                              {alagamento.areasAfetadas.map((area, idx) => (
+                                <li key={idx}>
+                                  <Typography variant="body2">{area}</Typography>
+                                </li>
+                              ))}
+                            </ul>
+                          </Box>
+                        )}
+                        {alagamento.recomendacoes && alagamento.recomendacoes.length > 0 && (
+                          <Box sx={{ mt: 2 }}>
+                            <Typography variant="subtitle1" gutterBottom>
+                              Recomendações:
+                            </Typography>
+                            <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                              {alagamento.recomendacoes.map((rec, idx) => (
+                                <li key={idx}>
+                                  <Typography variant="body2">{rec}</Typography>
+                                </li>
+                              ))}
+                            </ul>
+                          </Box>
+                        )}
                       </Paper>
                     </Grid>
                   ))}
