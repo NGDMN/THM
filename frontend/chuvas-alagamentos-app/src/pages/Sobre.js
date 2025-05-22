@@ -6,22 +6,22 @@ import TimelineIcon from '@mui/icons-material/Timeline';
 
 const Sobre = () => {
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 8, textAlign: 'center' }}>
+      <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center', fontWeight: 700, color: 'primary.main' }}>
         Sobre o Sistema
       </Typography>
 
-      <Paper sx={{ p: 4, mb: 4 }}>
-        <Typography variant="body1" paragraph>
+      <Paper sx={{ p: 4, mb: 4, textAlign: 'center', bgcolor: 'background.paper' }}>
+        <Typography variant="body1" paragraph sx={{ textAlign: 'center' }}>
           O Sistema de Alerta de Chuvas é uma plataforma desenvolvida para monitorar e alertar sobre
           condições meteorológicas e riscos de alagamentos em diferentes regiões do Brasil.
         </Typography>
 
-        <Grid container spacing={4} sx={{ mt: 2 }}>
+        <Grid container spacing={4} sx={{ mt: 2, justifyContent: 'center' }}>
           <Grid item xs={12} md={4}>
             <Box sx={{ textAlign: 'center', p: 2 }}>
               <WaterDropIcon sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
-              <Typography variant="h6" gutterBottom>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                 Previsões de Chuvas
               </Typography>
               <Typography variant="body2">
@@ -30,11 +30,10 @@ const Sobre = () => {
               </Typography>
             </Box>
           </Grid>
-
           <Grid item xs={12} md={4}>
             <Box sx={{ textAlign: 'center', p: 2 }}>
               <WarningAmber sx={{ fontSize: 60, color: 'warning.main', mb: 2 }} />
-              <Typography variant="h6" gutterBottom>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                 Alertas de Alagamentos
               </Typography>
               <Typography variant="body2">
@@ -43,11 +42,10 @@ const Sobre = () => {
               </Typography>
             </Box>
           </Grid>
-
           <Grid item xs={12} md={4}>
             <Box sx={{ textAlign: 'center', p: 2 }}>
               <TimelineIcon sx={{ fontSize: 60, color: 'secondary.main', mb: 2 }} />
-              <Typography variant="h6" gutterBottom>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                 Histórico de Dados
               </Typography>
               <Typography variant="body2">
@@ -59,8 +57,8 @@ const Sobre = () => {
         </Grid>
       </Paper>
 
-      <Paper sx={{ p: 4 }}>
-        <Typography variant="h5" gutterBottom>
+      <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'background.paper' }}>
+        <Typography variant="h5" gutterBottom sx={{ fontWeight: 700, color: 'primary.main' }}>
           Como Utilizar
         </Typography>
         <Typography variant="body1" paragraph>

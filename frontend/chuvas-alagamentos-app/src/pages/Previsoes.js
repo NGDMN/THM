@@ -26,13 +26,12 @@ const Previsoes = () => {
   // Carregar lista de municípios
   useEffect(() => {
     const fetchMunicipios = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
         const dados = await getMunicipios();
         if (!Array.isArray(dados)) {
           throw new Error('Formato de dados inválido');
         }
-        
         const municipiosPorEstado = dados.reduce((acc, municipio) => {
           if (!acc[municipio.uf]) {
             acc[municipio.uf] = [];
@@ -40,10 +39,8 @@ const Previsoes = () => {
           acc[municipio.uf].push(municipio.nome);
           return acc;
         }, {});
-        
         setMunicipios(municipiosPorEstado);
         setMunicipiosLista(dados);
-        
         if (municipiosPorEstado[estado]?.length > 0) {
           setCidade(municipiosPorEstado[estado][0]);
         }
@@ -175,9 +172,9 @@ const Previsoes = () => {
         </Alert>
       ) : (
         <Grid container spacing={3}>
-          {chuvasArray.length === 0 && alagamentosArray.length === 0 && (
+          {chuvasArray.length === 0 && alagamentosArray.length === 0 && !loading && !error && (
             <Alert severity="info" sx={{ mt: 2 }}>
-              Nenhuma previsão disponível para o período selecionado.
+              Nenhuma previsão disponível para o município e estado selecionados.
             </Alert>
           )}
           {chuvasArray.map((previsao, index) => (
