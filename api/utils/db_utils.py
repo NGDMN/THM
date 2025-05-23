@@ -14,78 +14,17 @@ try:
 except ImportError:
     print("psycopg2 não está disponível. Usando dados simulados.")
 
-# Variável global para armazenar a conexão
-_connection = None
-
-def setup_database_connection():
+def get_db_connection():
     """
-    Estabelece uma conexão com o banco de dados PostgreSQL.
-    Esta função deve ser chamada no início do script para configurar a conexão.
+    Cria uma nova conexão com o banco de dados PostgreSQL
     
     Returns:
-        bool: True se a conexão foi estabelecida com sucesso, False caso contrário.
+        connection: Conexão com o banco ou None se houver erro
     """
-    global _connection
-    
     if not PSYCOPG2_AVAILABLE or USE_MOCK_DATA:
         print("Usando dados simulados em vez de acessar o banco de dados.")
-        return False
+        return None
         
-    try:
-        _connection = psycopg2.connect(
-            dbname=DB_CONFIG['dbname'],
-            user=DB_CONFIG['user'],
-            password=DB_CONFIG['password'],
-            host=DB_CONFIG['host'],
-            port=DB_CONFIG['port']
-        )
-        print("Conexão com o banco de dados estabelecida com sucesso.")
-        return True
-    except Exception as e:
-        print(f"Erro ao conectar ao PostgreSQL: {str(e)}")
-        return False
-
-def close_database_connection():
-    """
-    Fecha a conexão com o banco de dados PostgreSQL.
-    Esta função deve ser chamada no final do script para liberar recursos.
-    
-    Returns:
-        bool: True se a conexão foi fechada com sucesso, False caso contrário.
-    """
-    global _connection
-    
-    if _connection:
-        try:
-            _connection.close()
-            _connection = None
-            print("Conexão com o banco de dados fechada com sucesso.")
-            return True
-        except Exception as e:
-            print(f"Erro ao fechar conexão com PostgreSQL: {str(e)}")
-            return False
-    
-    return True  # Não há conexão para fechar
-
-@contextmanager
-def get_connection():
-    """
-    Gerenciador de contexto para obter uma conexão com o banco PostgreSQL
-    e garantir seu fechamento após o uso.
-    """
-    if not PSYCOPG2_AVAILABLE or USE_MOCK_DATA:
-        # Se o psycopg2 não estiver disponível, retornar None
-        # O código que usa esta função deve estar preparado para lidar com isso
-        yield None
-        return
-        
-    # Usar a conexão global se disponível
-    global _connection
-    if _connection:
-        yield _connection
-        return
-        
-    connection = None
     try:
         connection = psycopg2.connect(
             dbname=DB_CONFIG['dbname'],
@@ -94,13 +33,10 @@ def get_connection():
             host=DB_CONFIG['host'],
             port=DB_CONFIG['port']
         )
-        yield connection
+        return connection
     except Exception as e:
         print(f"Erro ao conectar ao PostgreSQL: {str(e)}")
-        yield None
-    finally:
-        if connection and connection != _connection:
-            connection.close()
+        return None
 
 def execute_query(query, params=None):
     """
@@ -121,7 +57,8 @@ def execute_query(query, params=None):
         if not conn:
             print("[DEBUG] Erro: Não foi possível conectar ao banco de dados")
             return pd.DataFrame()
-            
+        
+        # Usar pandas para executar a query e retornar DataFrame
         df = pd.read_sql_query(query, conn, params=params)
         conn.close()
         
@@ -149,23 +86,28 @@ def execute_dml(query, params=None):
         return 0
         
     try:
-        with get_connection() as connection:
-            if connection is None:
-                return 0
-            
-            cursor = connection.cursor()
-            
-            if params:
-                if isinstance(params, list):
-                    cursor.executemany(query, params)
-                else:
-                    cursor.execute(query, params)
+        conn = get_db_connection()
+        if not conn:
+            print("Erro: Não foi possível conectar ao banco de dados")
+            return 0
+        
+        cursor = conn.cursor()
+        
+        if params:
+            if isinstance(params, list):
+                cursor.executemany(query, params)
             else:
-                cursor.execute(query)
-                
-            rows_affected = cursor.rowcount
-            connection.commit()
-            return rows_affected
+                cursor.execute(query, params)
+        else:
+            cursor.execute(query)
+            
+        rows_affected = cursor.rowcount
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return rows_affected
+        
     except Exception as e:
         print(f"Erro ao executar operação DML: {str(e)}")
-        return 0 
+        return 0
