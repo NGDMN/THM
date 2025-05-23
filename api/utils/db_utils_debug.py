@@ -9,23 +9,18 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime, date, timedelta
 import logging
-from dotenv import load_dotenv
-
-# Carregar variáveis do .env
-load_dotenv()
 
 # Configurar logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Configuração do banco de dados usando .env
+# Configuração do banco de dados
 DATABASE_CONFIG = {
-    'host': os.getenv('DB_HOST'),
-    'database': os.getenv('DB_NAME'),
+    'dbname': os.getenv('DB_NAME'),
     'user': os.getenv('DB_USER'),
     'password': os.getenv('DB_PASSWORD'),
-    'port': os.getenv('DB_PORT'),
-    'sslmode': 'require'
+    'host': os.getenv('DB_HOST'),
+    'port': os.getenv('DB_PORT')
 }
 
 def get_db_connection():
@@ -333,21 +328,8 @@ def test_api_functions():
     print("🧪 TESTANDO FUNÇÕES DA API")
     print("=" * 50)
     
-    # Verificar variáveis de ambiente
-    print("🔧 Verificando variáveis de ambiente:")
-    for key in ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_PORT']:
-        value = os.getenv(key)
-        if key == 'DB_PASSWORD':
-            print(f"   {key}: {'***' if value else 'NÃO ENCONTRADO'}")
-        else:
-            print(f"   {key}: {value if value else 'NÃO ENCONTRADO'}")
-    
-    if not all([os.getenv(key) for key in ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_PORT']]):
-        print("❌ Algumas variáveis de ambiente não foram encontradas!")
-        return
-    
     # Teste 1: Municípios
-    print("\n1. Testando get_municipios()...")
+    print("1. Testando get_municipios()...")
     municipios = get_municipios()
     print(f"   ✅ {len(municipios)} municípios encontrados")
     
@@ -369,4 +351,4 @@ def test_api_functions():
     print("\n✅ Todos os testes concluídos!")
 
 if __name__ == "__main__":
-    test_api_functions()
+    test_api_functions() 
