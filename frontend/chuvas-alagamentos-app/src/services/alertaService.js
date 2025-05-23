@@ -44,14 +44,21 @@ export const getDadosAlerta = async (cidade, estado) => {
 
 // Obter previsão de chuvas
 export const getPrevisaoChuvas = async (cidade, estado) => {
+  console.log('=== getPrevisaoChuvas ===');
+  console.log('Parâmetros:', { cidade, estado });
+  
   try {
-    const response = await axios.get(`${API_URL}/previsao/chuvas`, {
-      params: { cidade, estado }
-    });
-    return response.data;
+    const response = await fetch(`/api/previsoes?cidade=${cidade}&estado=${estado}`);
+    const rawData = await response.text(); // Primeiro como texto
+    console.log('Raw response:', rawData);
+    
+    const data = JSON.parse(rawData); // Depois parse
+    console.log('Parsed data:', data);
+    
+    return data;
   } catch (error) {
-    console.error('Erro ao buscar previsão de chuvas:', error);
-    throw new Error('Não foi possível obter a previsão de chuvas');
+    console.error('Erro detalhado:', error);
+    throw error;
   }
 };
 

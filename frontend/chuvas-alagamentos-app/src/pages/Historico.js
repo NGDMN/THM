@@ -21,8 +21,8 @@ const estados = [
 
 const Historico = () => {
   const [tab, setTab] = useState(0);
-  const [chuvas, setChuvas] = useState(null);
-  const [alagamentos, setAlagamentos] = useState(null);
+  const [chuvas, setChuvas] = useState([]);
+  const [alagamentos, setAlagamentos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [estado, setEstado] = useState('RJ');
@@ -36,23 +36,36 @@ const Historico = () => {
       setLoading(true);
       try {
         const dados = await getMunicipios(estado);
-        const municipiosPorEstado = Array.isArray(dados) ? dados.reduce((acc, municipio) => {
-          if (municipio.uf && municipio.nome) {
-            if (!acc[municipio.uf]) {
-              acc[municipio.uf] = [];
+        console.log('Dados de municípios recebidos:', dados);
+        
+        // Verificação mais robusta dos dados
+        let municipiosPorEstado = {};
+        if (Array.isArray(dados)) {
+          municipiosPorEstado = dados.reduce((acc, municipio) => {
+            if (municipio && municipio.uf && municipio.nome) {
+              if (!acc[municipio.uf]) {
+                acc[municipio.uf] = [];
+              }
+              acc[municipio.uf].push(municipio.nome);
             }
-            acc[municipio.uf].push(municipio.nome);
-          }
-          return acc;
-        }, {}) : {};
+            return acc;
+          }, {});
+        }
+        
         setMunicipios(municipiosPorEstado);
-        if (municipiosPorEstado[estado]?.length > 0) {
+        
+        // Verificação segura antes de acessar o array
+        if (municipiosPorEstado[estado] && Array.isArray(municipiosPorEstado[estado]) && municipiosPorEstado[estado].length > 0) {
           setCidade(municipiosPorEstado[estado][0]);
+        } else {
+          setCidade('');
         }
         setError(null);
       } catch (err) {
         console.error('Erro ao carregar municípios:', err);
         setError('Não foi possível carregar a lista de municípios');
+        setMunicipios({});
+        setCidade('');
       } finally {
         setLoading(false);
       }
@@ -67,25 +80,33 @@ const Historico = () => {
 
       if (dataInicio && dataFim && dataInicio > dataFim) {
         setError('A data inicial não pode ser maior que a data final');
+        setLoading(false);
         return;
       }
 
       const dataInicioFormatada = dataInicio ? format(dataInicio, 'yyyy-MM-dd') : format(new Date('2020-01-01'), 'yyyy-MM-dd');
       const dataFimFormatada = dataFim ? format(dataFim, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
       
+      console.log('Buscando histórico para:', { cidade, estado, dataInicioFormatada, dataFimFormatada });
+      
       const [dadosChuvas, dadosAlagamentos] = await Promise.all([
         getHistoricoChuvas(cidade, estado, dataInicioFormatada, dataFimFormatada),
         getHistoricoAlagamentos(cidade, estado, dataInicioFormatada, dataFimFormatada)
       ]);
 
-      if (!dadosChuvas || dadosChuvas.length === 0) {
+      console.log('Dados de chuvas recebidos:', dadosChuvas);
+      console.log('Dados de alagamentos recebidos:', dadosAlagamentos);
+
+      // Garantir que sempre temos arrays
+      const chuvasArray = Array.isArray(dadosChuvas) ? dadosChuvas : [];
+      const alagamentosArray = Array.isArray(dadosAlagamentos) ? dadosAlagamentos : [];
+
+      if (chuvasArray.length === 0) {
         setError('Nenhum dado encontrado para o período selecionado');
-        setChuvas([]);
-        setAlagamentos([]);
-      } else {
-        setChuvas(dadosChuvas);
-        setAlagamentos(dadosAlagamentos || []);
       }
+      
+      setChuvas(chuvasArray);
+      setAlagamentos(alagamentosArray);
     } catch (err) {
       console.error('Erro ao carregar histórico:', err);
       setError('Não foi possível carregar os dados históricos');
@@ -103,8 +124,11 @@ const Historico = () => {
   const handleEstadoChange = (event) => {
     const novoEstado = event.target.value;
     setEstado(novoEstado);
-    if (municipios[novoEstado]?.length > 0) {
+    // Verificação segura antes de acessar o array
+    if (municipios[novoEstado] && Array.isArray(municipios[novoEstado]) && municipios[novoEstado].length > 0) {
       setCidade(municipios[novoEstado][0]);
+    } else {
+      setCidade('');
     }
   };
 
@@ -113,12 +137,12 @@ const Historico = () => {
   };
 
   const calcularEstatisticas = () => {
-    if (!chuvas || chuvas.length === 0) {
+    if (!Array.isArray(chuvas) || chuvas.length === 0) {
       return { total: 0, media: 0, maxima: 0 };
     }
-    const total = chuvas.reduce((soma, item) => soma + item.precipitacao, 0);
+    const total = chuvas.reduce((soma, item) => soma + (item.precipitacao || 0), 0);
     const media = total / chuvas.length;
-    const maxima = Math.max(...chuvas.map(item => item.precipitacao));
+    const maxima = Math.max(...chuvas.map(item => item.precipitacao || 0));
     return {
       total: parseFloat(total.toFixed(1)),
       media: parseFloat(media.toFixed(1)),
@@ -133,20 +157,12 @@ const Historico = () => {
     await handleBuscar();
   };
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
+  if (loading && !cidade) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+          <CircularProgress />
+        </Box>
       </Container>
     );
   }
@@ -179,17 +195,21 @@ const Historico = () => {
             value={cidade}
             label="Cidade"
             onChange={handleCidadeChange}
+            disabled={!municipios[estado] || municipios[estado].length === 0}
           >
-            {municipios[estado]?.map((cid) => (
-              <MenuItem key={cid} value={cid}>{cid}</MenuItem>
-            ))}
+            {municipios[estado] && Array.isArray(municipios[estado]) ? 
+              municipios[estado].map((cid) => (
+                <MenuItem key={cid} value={cid}>{cid}</MenuItem>
+              )) : 
+              <MenuItem value="">Nenhum município disponível</MenuItem>
+            }
           </Select>
         </FormControl>
 
         <TextField
           label="Data Inicial"
           type="date"
-          value={dataInicio}
+          value={dataInicio || ''}
           onChange={(e) => setDataInicio(e.target.value)}
           InputLabelProps={{ shrink: true }}
           sx={{ minWidth: 180 }}
@@ -198,7 +218,7 @@ const Historico = () => {
         <TextField
           label="Data Final"
           type="date"
-          value={dataFim}
+          value={dataFim || ''}
           onChange={(e) => setDataFim(e.target.value)}
           InputLabelProps={{ shrink: true }}
           sx={{ minWidth: 180 }}
@@ -207,9 +227,9 @@ const Historico = () => {
         <Button 
           variant="contained" 
           onClick={handleSubmit}
-          disabled={loading}
+          disabled={loading || !cidade}
         >
-          Buscar
+          {loading ? 'Buscando...' : 'Buscar'}
         </Button>
       </Box>
 
@@ -221,7 +241,7 @@ const Historico = () => {
         <Alert severity="error" sx={{ mt: 2 }}>
           {error}
         </Alert>
-      ) : chuvas.length > 0 ? (
+      ) : Array.isArray(chuvas) && chuvas.length > 0 ? (
         <>
           <Paper sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" gutterBottom>
@@ -257,20 +277,21 @@ const Historico = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {chuvas.map((chuva) => {
-                  const alagamentosDoDia = alagamentos.filter(
+                {chuvas.map((chuva, index) => {
+                  const alagamentosDoDia = Array.isArray(alagamentos) ? alagamentos.filter(
                     a => format(new Date(a.data), 'yyyy-MM-dd') === format(new Date(chuva.data), 'yyyy-MM-dd')
-                  );
+                  ) : [];
+                  
                   return (
                     <TableRow 
-                      key={chuva.data}
+                      key={chuva.data || index}
                       sx={{ 
                         bgcolor: alagamentosDoDia.length > 0 ? '#fff3e0' : 'inherit',
                         '&:hover': { bgcolor: alagamentosDoDia.length > 0 ? '#ffe0b2' : '#f5f5f5' }
                       }}
                     >
                       <TableCell>{format(new Date(chuva.data), 'dd/MM/yyyy')}</TableCell>
-                      <TableCell align="right">{chuva.precipitacao.toFixed(1)}</TableCell>
+                      <TableCell align="right">{(chuva.precipitacao || 0).toFixed(1)}</TableCell>
                       <TableCell>
                         {alagamentosDoDia.length > 0 ? (
                           <Chip 
@@ -291,9 +312,9 @@ const Historico = () => {
                         {alagamentosDoDia.length > 0 && (
                           <Box>
                             <Typography variant="body2" color="warning.dark">
-                              Nível: {alagamentosDoDia[0].nivelAlagamento}
+                              Nível: {alagamentosDoDia[0].nivelAlagamento || 'N/A'}
                             </Typography>
-                            {alagamentosDoDia[0].areasAfetadas && (
+                            {alagamentosDoDia[0].areasAfetadas && Array.isArray(alagamentosDoDia[0].areasAfetadas) && (
                               <Typography variant="body2">
                                 Áreas: {alagamentosDoDia[0].areasAfetadas.join(', ')}
                               </Typography>
@@ -310,11 +331,14 @@ const Historico = () => {
         </>
       ) : (
         <Alert severity="info" sx={{ mt: 2 }}>
-          Nenhum dado histórico encontrado para o período selecionado.
+          {cidade ? 
+            'Nenhum dado histórico encontrado para o período selecionado.' : 
+            'Selecione uma cidade para visualizar os dados históricos.'
+          }
         </Alert>
       )}
     </Container>
   );
 };
 
-export default Historico; 
+export default Historico;
