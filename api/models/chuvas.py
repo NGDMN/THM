@@ -21,6 +21,8 @@ class ChuvasModel:
         """
         try:
             print(f"[LOG] Parâmetros recebidos: cidade={cidade}, estado={estado}")
+            
+            # CORREÇÃO: Usar campos padronizados e verificar ambas as tabelas
             query = """
             SELECT 
                 data, 
@@ -33,18 +35,44 @@ class ChuvasModel:
                 AND data BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days'
             ORDER BY data
             """
+            
             params = {"cidade": cidade, "estado": estado}
             result = execute_query(query, params)
-            print(f"[LOG] Resultado: {result}")
+            print(f"[LOG] Resultado da tabela previsoes: {len(result) if not result.empty else 0} registros")
+            
+            # Se não encontrou dados na tabela previsoes, tentar chuvas_diarias
             if result.empty:
+                print(f"[LOG] Sem dados em 'previsoes', tentando 'chuvas_diarias'...")
+                query_historico = """
+                SELECT 
+                    data, 
+                    precipitacao_diaria as precipitacao
+                FROM 
+                    chuvas_diarias
+                WHERE 
+                    UPPER(municipio) = UPPER(%(cidade)s)
+                    AND UPPER(estado) = UPPER(%(estado)s)
+                    AND data BETWEEN CURRENT_DATE - INTERVAL '30 days' AND CURRENT_DATE + INTERVAL '7 days'
+                ORDER BY data DESC
+                LIMIT 7
+                """
+                result = execute_query(query_historico, params)
+                print(f"[LOG] Resultado da tabela chuvas_diarias: {len(result) if not result.empty else 0} registros")
+            
+            if result.empty:
+                print(f"[LOG] Nenhum dado encontrado em ambas as tabelas")
                 return []
+                
             resultado = []
             for _, row in result.iterrows():
                 resultado.append({
                     'data': row['data'].strftime('%Y-%m-%d'),
-                    'precipitacao': float(row['precipitacao'])
+                    'precipitacao': float(row['precipitacao']) if row['precipitacao'] is not None else 0.0
                 })
+            
+            print(f"[LOG] Retornando {len(resultado)} registros")
             return resultado
+            
         except Exception as e:
             print(f"[LOG] Erro ao buscar previsões: {e}")
             return []
@@ -63,6 +91,8 @@ class ChuvasModel:
         """
         try:
             print(f"[LOG] Parâmetros recebidos: cidade={cidade}, estado={estado}, data_inicio={data_inicio}, data_fim={data_fim}")
+            
+            # Tentar primeiro na tabela chuvas_diarias (dados históricos)
             query = """
             SELECT 
                 data, 
@@ -75,18 +105,43 @@ class ChuvasModel:
                 AND data BETWEEN %(data_inicio)s AND %(data_fim)s
             ORDER BY data
             """
+            
             params = {"cidade": cidade, "estado": estado, "data_inicio": data_inicio, "data_fim": data_fim}
             result = execute_query(query, params)
-            print(f"[LOG] Resultado: {result}")
+            print(f"[LOG] Resultado chuvas_diarias: {len(result) if not result.empty else 0} registros")
+            
+            # Se não encontrou dados históricos, tentar na tabela de previsões
             if result.empty:
+                print(f"[LOG] Sem dados históricos, tentando tabela previsoes...")
+                query_previsoes = """
+                SELECT 
+                    data, 
+                    precipitacao
+                FROM 
+                    previsoes
+                WHERE 
+                    UPPER(cidade) = UPPER(%(cidade)s)
+                    AND UPPER(estado) = UPPER(%(estado)s)
+                    AND data BETWEEN %(data_inicio)s AND %(data_fim)s
+                ORDER BY data
+                """
+                result = execute_query(query_previsoes, params)
+                print(f"[LOG] Resultado previsoes: {len(result) if not result.empty else 0} registros")
+            
+            if result.empty:
+                print(f"[LOG] Nenhum dado encontrado em ambas as tabelas")
                 return []
+                
             resultado = []
             for _, row in result.iterrows():
                 resultado.append({
                     'data': row['data'].strftime('%Y-%m-%d'),
-                    'precipitacao': float(row['precipitacao'])
+                    'precipitacao': float(row['precipitacao']) if row['precipitacao'] is not None else 0.0
                 })
+                
+            print(f"[LOG] Retornando {len(resultado)} registros")
             return resultado
+            
         except Exception as e:
             print(f"[LOG] Erro ao buscar histórico de chuvas: {e}")
-            return [] 
+            return []
