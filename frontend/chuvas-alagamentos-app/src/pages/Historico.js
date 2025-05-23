@@ -10,6 +10,7 @@ import Diagnostico from '../components/Diagnostico';
 import { List, ListItem, ListItemText } from '@mui/material';
 import { WarningAmber } from '@mui/icons-material';
 import { TableContainer, Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
+import PatternBackground, { PATTERN_PRESETS } from '../components/PatternBackground';
 
 // Componente para gráfico de linha simples
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -168,176 +169,178 @@ const Historico = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Histórico de Chuvas e Alagamentos
-      </Typography>
+    <PatternBackground {...PATTERN_PRESETS.content}>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Histórico de Chuvas e Alagamentos
+        </Typography>
 
-      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-        <FormControl sx={{ minWidth: 180 }}>
-          <InputLabel id="estado-label">Estado</InputLabel>
-          <Select
-            labelId="estado-label"
-            value={estado}
-            label="Estado"
-            onChange={handleEstadoChange}
+        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+          <FormControl sx={{ minWidth: 180 }}>
+            <InputLabel id="estado-label">Estado</InputLabel>
+            <Select
+              labelId="estado-label"
+              value={estado}
+              label="Estado"
+              onChange={handleEstadoChange}
+            >
+              {estados.map((est) => (
+                <MenuItem key={est.sigla} value={est.sigla}>{est.nome}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl sx={{ minWidth: 220 }}>
+            <InputLabel id="cidade-label">Cidade</InputLabel>
+            <Select
+              labelId="cidade-label"
+              value={cidade}
+              label="Cidade"
+              onChange={handleCidadeChange}
+              disabled={!municipios[estado] || municipios[estado].length === 0}
+            >
+              {municipios[estado] && Array.isArray(municipios[estado]) ? 
+                municipios[estado].map((cid) => (
+                  <MenuItem key={cid} value={cid}>{cid}</MenuItem>
+                )) : 
+                <MenuItem value="">Nenhum município disponível</MenuItem>
+              }
+            </Select>
+          </FormControl>
+
+          <TextField
+            label="Data Inicial"
+            type="date"
+            value={dataInicio || ''}
+            onChange={(e) => setDataInicio(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            sx={{ minWidth: 180 }}
+          />
+
+          <TextField
+            label="Data Final"
+            type="date"
+            value={dataFim || ''}
+            onChange={(e) => setDataFim(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            sx={{ minWidth: 180 }}
+          />
+
+          <Button 
+            variant="contained" 
+            onClick={handleSubmit}
+            disabled={loading || !cidade}
           >
-            {estados.map((est) => (
-              <MenuItem key={est.sigla} value={est.sigla}>{est.nome}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl sx={{ minWidth: 220 }}>
-          <InputLabel id="cidade-label">Cidade</InputLabel>
-          <Select
-            labelId="cidade-label"
-            value={cidade}
-            label="Cidade"
-            onChange={handleCidadeChange}
-            disabled={!municipios[estado] || municipios[estado].length === 0}
-          >
-            {municipios[estado] && Array.isArray(municipios[estado]) ? 
-              municipios[estado].map((cid) => (
-                <MenuItem key={cid} value={cid}>{cid}</MenuItem>
-              )) : 
-              <MenuItem value="">Nenhum município disponível</MenuItem>
-            }
-          </Select>
-        </FormControl>
-
-        <TextField
-          label="Data Inicial"
-          type="date"
-          value={dataInicio || ''}
-          onChange={(e) => setDataInicio(e.target.value)}
-          InputLabelProps={{ shrink: true }}
-          sx={{ minWidth: 180 }}
-        />
-
-        <TextField
-          label="Data Final"
-          type="date"
-          value={dataFim || ''}
-          onChange={(e) => setDataFim(e.target.value)}
-          InputLabelProps={{ shrink: true }}
-          sx={{ minWidth: 180 }}
-        />
-
-        <Button 
-          variant="contained" 
-          onClick={handleSubmit}
-          disabled={loading || !cidade}
-        >
-          {loading ? 'Buscando...' : 'Buscar'}
-        </Button>
-      </Box>
-
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <CircularProgress />
+            {loading ? 'Buscando...' : 'Buscar'}
+          </Button>
         </Box>
-      ) : error ? (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
-      ) : Array.isArray(chuvas) && chuvas.length > 0 ? (
-        <>
-          <Paper sx={{ p: 3, mb: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              Estatísticas do Período
-            </Typography>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={4}>
-                <Typography variant="subtitle1">
-                  Precipitação Total: {estatisticasChuvas.total} mm
-                </Typography>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Typography variant="subtitle1">
-                  Média Diária: {estatisticasChuvas.media} mm
-                </Typography>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Typography variant="subtitle1">
-                  Máxima Registrada: {estatisticasChuvas.maxima} mm
-                </Typography>
-              </Grid>
-            </Grid>
-          </Paper>
 
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Data</TableCell>
-                  <TableCell align="right">Precipitação (mm)</TableCell>
-                  <TableCell>Alagamento</TableCell>
-                  <TableCell>Detalhes</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {chuvas.map((chuva, index) => {
-                  const alagamentosDoDia = Array.isArray(alagamentos) ? alagamentos.filter(
-                    a => format(new Date(a.data), 'yyyy-MM-dd') === format(new Date(chuva.data), 'yyyy-MM-dd')
-                  ) : [];
-                  
-                  return (
-                    <TableRow 
-                      key={chuva.data || index}
-                      sx={{ 
-                        bgcolor: alagamentosDoDia.length > 0 ? '#fff3e0' : 'inherit',
-                        '&:hover': { bgcolor: alagamentosDoDia.length > 0 ? '#ffe0b2' : '#f5f5f5' }
-                      }}
-                    >
-                      <TableCell>{format(new Date(chuva.data), 'dd/MM/yyyy')}</TableCell>
-                      <TableCell align="right">{(chuva.precipitacao || 0).toFixed(1)}</TableCell>
-                      <TableCell>
-                        {alagamentosDoDia.length > 0 ? (
-                          <Chip 
-                            label="Sim" 
-                            color="warning" 
-                            size="small"
-                            icon={<WarningAmber />}
-                          />
-                        ) : (
-                          <Chip 
-                            label="Não" 
-                            color="success" 
-                            size="small"
-                          />
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {alagamentosDoDia.length > 0 && (
-                          <Box>
-                            <Typography variant="body2" color="warning.dark">
-                              Nível: {alagamentosDoDia[0].nivelAlagamento || 'N/A'}
-                            </Typography>
-                            {alagamentosDoDia[0].areasAfetadas && Array.isArray(alagamentosDoDia[0].areasAfetadas) && (
-                              <Typography variant="body2">
-                                Áreas: {alagamentosDoDia[0].areasAfetadas.join(', ')}
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {error}
+          </Alert>
+        ) : Array.isArray(chuvas) && chuvas.length > 0 ? (
+          <>
+            <Paper sx={{ p: 3, mb: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                Estatísticas do Período
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={4}>
+                  <Typography variant="subtitle1">
+                    Precipitação Total: {estatisticasChuvas.total} mm
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Typography variant="subtitle1">
+                    Média Diária: {estatisticasChuvas.media} mm
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Typography variant="subtitle1">
+                    Máxima Registrada: {estatisticasChuvas.maxima} mm
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Paper>
+
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Data</TableCell>
+                    <TableCell align="right">Precipitação (mm)</TableCell>
+                    <TableCell>Alagamento</TableCell>
+                    <TableCell>Detalhes</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {chuvas.map((chuva, index) => {
+                    const alagamentosDoDia = Array.isArray(alagamentos) ? alagamentos.filter(
+                      a => format(new Date(a.data), 'yyyy-MM-dd') === format(new Date(chuva.data), 'yyyy-MM-dd')
+                    ) : [];
+                    
+                    return (
+                      <TableRow 
+                        key={chuva.data || index}
+                        sx={{ 
+                          bgcolor: alagamentosDoDia.length > 0 ? '#fff3e0' : 'inherit',
+                          '&:hover': { bgcolor: alagamentosDoDia.length > 0 ? '#ffe0b2' : '#f5f5f5' }
+                        }}
+                      >
+                        <TableCell>{format(new Date(chuva.data), 'dd/MM/yyyy')}</TableCell>
+                        <TableCell align="right">{(chuva.precipitacao || 0).toFixed(1)}</TableCell>
+                        <TableCell>
+                          {alagamentosDoDia.length > 0 ? (
+                            <Chip 
+                              label="Sim" 
+                              color="warning" 
+                              size="small"
+                              icon={<WarningAmber />}
+                            />
+                          ) : (
+                            <Chip 
+                              label="Não" 
+                              color="success" 
+                              size="small"
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {alagamentosDoDia.length > 0 && (
+                            <Box>
+                              <Typography variant="body2" color="warning.dark">
+                                Nível: {alagamentosDoDia[0].nivelAlagamento || 'N/A'}
                               </Typography>
-                            )}
-                          </Box>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </>
-      ) : (
-        <Alert severity="info" sx={{ mt: 2 }}>
-          {cidade ? 
-            'Nenhum dado histórico encontrado para o período selecionado.' : 
-            'Selecione uma cidade para visualizar os dados históricos.'
-          }
-        </Alert>
-      )}
-    </Container>
+                              {alagamentosDoDia[0].areasAfetadas && Array.isArray(alagamentosDoDia[0].areasAfetadas) && (
+                                <Typography variant="body2">
+                                  Áreas: {alagamentosDoDia[0].areasAfetadas.join(', ')}
+                                </Typography>
+                              )}
+                            </Box>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </>
+        ) : (
+          <Alert severity="info" sx={{ mt: 2 }}>
+            {cidade ? 
+              'Nenhum dado histórico encontrado para o período selecionado.' : 
+              'Selecione uma cidade para visualizar os dados históricos.'
+            }
+          </Alert>
+        )}
+      </Container>
+    </PatternBackground>
   );
 };
 

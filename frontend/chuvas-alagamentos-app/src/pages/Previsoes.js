@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import Diagnostico from '../components/Diagnostico';
 import WarningAmber from '@mui/icons-material/WarningAmber';
 import { format } from 'date-fns';
+import PatternBackground, { PATTERN_PRESETS } from '../components/PatternBackground';
 
 const estados = [
   { sigla: 'RJ', nome: 'Rio de Janeiro' },
@@ -185,132 +186,134 @@ const Previsoes = () => {
   const alagamentosArray = Array.isArray(alagamentos) ? alagamentos : [];
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Previsões para {cidade || 'Carregando...'} - {estado}
-      </Typography>
-      
-      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-        <FormControl sx={{ minWidth: 180 }}>
-          <InputLabel id="estado-label">Estado</InputLabel>
-          <Select
-            labelId="estado-label"
-            value={estado}
-            label="Estado"
-            onChange={handleEstadoChange}
-          >
-            {estados.map((est) => (
-              <MenuItem key={est.sigla} value={est.sigla}>{est.nome}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+    <PatternBackground {...PATTERN_PRESETS.content}>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Previsões para {cidade || 'Carregando...'} - {estado}
+        </Typography>
         
-        <FormControl sx={{ minWidth: 220 }}>
-          <InputLabel id="cidade-label">Cidade</InputLabel>
-          <Select
-            labelId="cidade-label"
-            value={cidade}
-            label="Cidade"
-            onChange={handleCidadeChange}
-            disabled={!municipios[estado] || municipios[estado].length === 0}
-          >
-            {municipios[estado] && Array.isArray(municipios[estado]) ? 
-              municipios[estado].map((cid) => (
-                <MenuItem key={cid} value={cid}>{cid}</MenuItem>
-              )) : 
-              <MenuItem value="">Nenhum município disponível</MenuItem>
-            }
-          </Select>
-        </FormControl>
-      </Box>
-
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <CircularProgress />
-          <Typography sx={{ ml: 2 }}>Carregando previsões...</Typography>
+        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+          <FormControl sx={{ minWidth: 180 }}>
+            <InputLabel id="estado-label">Estado</InputLabel>
+            <Select
+              labelId="estado-label"
+              value={estado}
+              label="Estado"
+              onChange={handleEstadoChange}
+            >
+              {estados.map((est) => (
+                <MenuItem key={est.sigla} value={est.sigla}>{est.nome}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          
+          <FormControl sx={{ minWidth: 220 }}>
+            <InputLabel id="cidade-label">Cidade</InputLabel>
+            <Select
+              labelId="cidade-label"
+              value={cidade}
+              label="Cidade"
+              onChange={handleCidadeChange}
+              disabled={!municipios[estado] || municipios[estado].length === 0}
+            >
+              {municipios[estado] && Array.isArray(municipios[estado]) ? 
+                municipios[estado].map((cid) => (
+                  <MenuItem key={cid} value={cid}>{cid}</MenuItem>
+                )) : 
+                <MenuItem value="">Nenhum município disponível</MenuItem>
+              }
+            </Select>
+          </FormControl>
         </Box>
-      ) : error ? (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
-      ) : chuvasArray.length > 0 ? (
-        <Grid container spacing={3}>
-          {chuvasArray.map((previsao, index) => (
-            <Grid item xs={12} md={6} lg={4} key={previsao.data || index}>
-              <Paper 
-                sx={{ 
-                  p: 2,
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  position: 'relative',
-                  bgcolor: previsao.riscoAlagamento ? '#fff3e0' : 'background.paper'
-                }}
-              >
-                <Typography variant="h6" gutterBottom>
-                  {previsao.data ? format(new Date(previsao.data), 'dd/MM/yyyy') : 'Data não disponível'}
-                </Typography>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h4" sx={{ mr: 2 }}>
-                    {(previsao.precipitacao || 0).toFixed(1)} mm
-                  </Typography>
-                  {previsao.riscoAlagamento && (
-                    <Tooltip title="Risco de Alagamento">
-                      <WarningAmber color="warning" />
-                    </Tooltip>
-                  )}
-                </Box>
 
-                {previsao.temperatura && (
-                  <Typography variant="body2" sx={{ mb: 1 }}>
-                    Temperatura: {previsao.temperatura}°C
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <CircularProgress />
+            <Typography sx={{ ml: 2 }}>Carregando previsões...</Typography>
+          </Box>
+        ) : error ? (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {error}
+          </Alert>
+        ) : chuvasArray.length > 0 ? (
+          <Grid container spacing={3}>
+            {chuvasArray.map((previsao, index) => (
+              <Grid item xs={12} md={6} lg={4} key={previsao.data || index}>
+                <Paper 
+                  sx={{ 
+                    p: 2,
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    position: 'relative',
+                    bgcolor: previsao.riscoAlagamento ? '#fff3e0' : 'background.paper'
+                  }}
+                >
+                  <Typography variant="h6" gutterBottom>
+                    {previsao.data ? format(new Date(previsao.data), 'dd/MM/yyyy') : 'Data não disponível'}
                   </Typography>
-                )}
-
-                {previsao.umidade && (
-                  <Typography variant="body2" sx={{ mb: 1 }}>
-                    Umidade: {previsao.umidade}%
-                  </Typography>
-                )}
-
-                {previsao.riscoAlagamento && (
-                  <Box sx={{ mt: 2, p: 2, bgcolor: '#fff3e0', borderRadius: 1 }}>
-                    <Typography variant="subtitle2" color="warning.dark" gutterBottom>
-                      Risco de Alagamento
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h4" sx={{ mr: 2 }}>
+                      {(previsao.precipitacao || 0).toFixed(1)} mm
                     </Typography>
-                    <Typography variant="body2">
-                      Probabilidade: {previsao.probabilidadeAlagamento || 0}%
-                    </Typography>
-                    {previsao.recomendacoes && Array.isArray(previsao.recomendacoes) && previsao.recomendacoes.length > 0 && (
-                      <Box sx={{ mt: 1 }}>
-                        <Typography variant="subtitle2" gutterBottom>
-                          Recomendações:
-                        </Typography>
-                        <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
-                          {previsao.recomendacoes.map((rec, idx) => (
-                            <li key={idx}>
-                              <Typography variant="body2">{rec}</Typography>
-                            </li>
-                          ))}
-                        </ul>
-                      </Box>
+                    {previsao.riscoAlagamento && (
+                      <Tooltip title="Risco de Alagamento">
+                        <WarningAmber color="warning" />
+                      </Tooltip>
                     )}
                   </Box>
-                )}
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
-      ) : (
-        <Alert severity="info" sx={{ mt: 2 }}>
-          {cidade ? 
-            `Nenhuma previsão disponível para ${cidade} - ${estado}. Verifique se a cidade está correta ou tente outra localização.` : 
-            'Selecione uma cidade para visualizar as previsões.'
-          }
-        </Alert>
-      )}
-    </Container>
+
+                  {previsao.temperatura && (
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      Temperatura: {previsao.temperatura}°C
+                    </Typography>
+                  )}
+
+                  {previsao.umidade && (
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                      Umidade: {previsao.umidade}%
+                    </Typography>
+                  )}
+
+                  {previsao.riscoAlagamento && (
+                    <Box sx={{ mt: 2, p: 2, bgcolor: '#fff3e0', borderRadius: 1 }}>
+                      <Typography variant="subtitle2" color="warning.dark" gutterBottom>
+                        Risco de Alagamento
+                      </Typography>
+                      <Typography variant="body2">
+                        Probabilidade: {previsao.probabilidadeAlagamento || 0}%
+                      </Typography>
+                      {previsao.recomendacoes && Array.isArray(previsao.recomendacoes) && previsao.recomendacoes.length > 0 && (
+                        <Box sx={{ mt: 1 }}>
+                          <Typography variant="subtitle2" gutterBottom>
+                            Recomendações:
+                          </Typography>
+                          <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
+                            {previsao.recomendacoes.map((rec, idx) => (
+                              <li key={idx}>
+                                <Typography variant="body2">{rec}</Typography>
+                              </li>
+                            ))}
+                          </ul>
+                        </Box>
+                      )}
+                    </Box>
+                  )}
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <Alert severity="info" sx={{ mt: 2 }}>
+            {cidade ? 
+              `Nenhuma previsão disponível para ${cidade} - ${estado}. Verifique se a cidade está correta ou tente outra localização.` : 
+              'Selecione uma cidade para visualizar as previsões.'
+            }
+          </Alert>
+        )}
+      </Container>
+    </PatternBackground>
   );
 };
 
