@@ -123,8 +123,12 @@ def previsao_chuvas():
     cidade = request.args.get('cidade')
     estado = request.args.get('estado')
     
+    # Log dos parâmetros recebidos
+    print(f"[DEBUG] Parâmetros recebidos na API: cidade={cidade}, estado={estado}")
+    
     # Validar parâmetros
     if not cidade or not estado:
+        print("[DEBUG] Parâmetros inválidos: cidade ou estado ausentes")
         return jsonify({
             'erro': 'Parâmetros inválidos',
             'mensagem': 'Os parâmetros cidade e estado são obrigatórios'
@@ -132,6 +136,7 @@ def previsao_chuvas():
     
     # Validar estado (apenas RJ e SP)
     if estado not in ['RJ', 'SP']:
+        print(f"[DEBUG] Estado inválido: {estado}")
         return jsonify({
             'erro': 'Estado inválido',
             'mensagem': 'O estado deve ser RJ ou SP'
@@ -139,9 +144,12 @@ def previsao_chuvas():
     
     # Obter dados do modelo
     try:
+        print("[DEBUG] Iniciando busca de dados no modelo")
         dados = ChuvasModel.get_previsao_chuvas(cidade, estado)
+        print(f"[DEBUG] Dados retornados do modelo: {len(dados) if isinstance(dados, list) else 'não é lista'}")
         return jsonify(dados)
     except Exception as e:
+        print(f"[DEBUG] Erro ao obter previsão: {str(e)}")
         return jsonify({
             'erro': 'Erro ao obter previsão',
             'mensagem': str(e)

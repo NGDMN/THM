@@ -104,39 +104,32 @@ def get_connection():
 
 def execute_query(query, params=None):
     """
-    Executa uma consulta SELECT no banco de dados e retorna os resultados como DataFrame.
+    Executa uma query SQL e retorna os resultados como DataFrame
     
     Args:
         query (str): Query SQL a ser executada
-        params (dict, optional): Parâmetros para a query. Defaults to None.
+        params (dict): Parâmetros para a query
         
     Returns:
-        pd.DataFrame: Resultados da consulta ou DataFrame vazio em caso de erro/simulação
+        DataFrame: Resultados da query
     """
-    # Se psycopg2 não estiver disponível ou estiver em modo simulação, retornar DataFrame vazio
-    if not PSYCOPG2_AVAILABLE or USE_MOCK_DATA:
-        print("Usando dados simulados em vez de acessar o banco de dados.")
-        return pd.DataFrame()
-        
     try:
-        with get_connection() as connection:
-            if connection is None:
-                return pd.DataFrame()
+        print(f"[DEBUG] Executando query: {query}")
+        print(f"[DEBUG] Parâmetros: {params}")
+        
+        conn = get_db_connection()
+        if not conn:
+            print("[DEBUG] Erro: Não foi possível conectar ao banco de dados")
+            return pd.DataFrame()
             
-            cursor = connection.cursor(cursor_factory=RealDictCursor)
-            
-            if params:
-                cursor.execute(query, params)
-            else:
-                cursor.execute(query)
-                
-            # Converter resultado para DataFrame
-            result = cursor.fetchall()
-            df = pd.DataFrame(result)
-            
-            return df
+        df = pd.read_sql_query(query, conn, params=params)
+        conn.close()
+        
+        print(f"[DEBUG] Query executada com sucesso. Registros retornados: {len(df)}")
+        return df
+        
     except Exception as e:
-        print(f"Erro ao executar query: {str(e)}")
+        print(f"[DEBUG] Erro ao executar query: {str(e)}")
         return pd.DataFrame()
 
 def execute_dml(query, params=None):

@@ -8,91 +8,82 @@ class AlagamentosModel:
     """
     
     @staticmethod
+    def _normalizar_nome_cidade(cidade):
+        """
+        Normaliza o nome da cidade para o formato padrão
+        """
+        if not cidade:
+            return cidade
+        # Remove hífens e espaços extras
+        cidade = cidade.replace('-', ' ').strip()
+        # Converte para título (primeira letra de cada palavra em maiúscula)
+        return cidade.title()
+    
+    @staticmethod
     def get_previsao_alagamentos(cidade, estado):
         """
-        Obtém previsão de risco de alagamentos
+        Obtém previsão de risco de alagamentos para os próximos 7 dias
         
         Args:
             cidade (str): Nome da cidade
-            estado (str): Sigla do estado
+            estado (str): Sigla do estado (RJ ou SP)
             
         Returns:
-            dict: Dicionário com informações sobre risco de alagamentos
+            list: Lista de dicionários com data e risco de alagamento
         """
         try:
-            # Primeiro verifica se há previsão de chuvas fortes
+            print(f"[DEBUG] Iniciando get_previsao_alagamentos com: cidade={cidade}, estado={estado}")
+            
+            # Normalizar nome da cidade
+            cidade_normalizada = AlagamentosModel._normalizar_nome_cidade(cidade)
+            print(f"[DEBUG] Nome da cidade normalizado: {cidade_normalizada}")
+            
+            # Buscar dados de precipitação
             query = """
             SELECT 
-                MAX(precipitacao_diaria) as max_precipitacao
+                data, 
+                precipitacao,
+                CASE 
+                    WHEN precipitacao > 50 THEN 'Alto'
+                    WHEN precipitacao > 30 THEN 'Médio'
+                    ELSE 'Baixo'
+                END as risco
             FROM 
-                chuvas_diarias 
+                previsoes 
             WHERE 
-                municipio = %(cidade)s
-                AND data BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '3 days'
+                UPPER(cidade) = UPPER(%(cidade)s)
+                AND UPPER(estado) = UPPER(%(estado)s)
+                AND data BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days'
+            ORDER BY data
             """
             
-            params = {'cidade': cidade}
-            df = execute_query(query, params)
+            params = {"cidade": cidade_normalizada, "estado": estado}
+            print(f"[DEBUG] Query SQL: {query}")
+            print(f"[DEBUG] Parâmetros: {params}")
             
-            # Se não houver dados, retornar informação base
-            if df.empty or 'max_precipitacao' not in df.columns:
-                return {
-                    'probabilidade': 0,
-                    'nivelRisco': 'desconhecido',
-                    'recomendacoes': ['Dados insuficientes para análise'],
-                    'areasAfetadas': []
-                }
+            result = execute_query(query, params)
+            print(f"[DEBUG] Resultado da tabela previsoes: {len(result) if not result.empty else 0} registros")
             
-            # Determinar nível de risco com base na precipitação máxima
-            max_precipitacao = float(df['max_precipitacao'].iloc[0]) if not pd.isna(df['max_precipitacao'].iloc[0]) else 0
+            if result.empty:
+                print(f"[DEBUG] Nenhum dado encontrado")
+                return []
+                
+            resultado = []
+            for _, row in result.iterrows():
+                # Verificar se a data não é futura
+                if row['data'].date() <= datetime.date.today():
+                    resultado.append({
+                        'data': row['data'].strftime('%Y-%m-%d'),
+                        'precipitacao': float(row['precipitacao']) if row['precipitacao'] is not None else 0.0,
+                        'risco': row['risco']
+                    })
             
-            if max_precipitacao >= 50:
-                nivel_risco = 'alto'
-                probabilidade = 0.8
-            elif max_precipitacao >= 30:
-                nivel_risco = 'médio'
-                probabilidade = 0.5
-            else:
-                nivel_risco = 'baixo'
-                probabilidade = 0.2
-            
-            # Buscar áreas com histórico de alagamentos
-            query_areas = """
-            SELECT 
-                DISTINCT local
-            FROM 
-                alagamentos 
-            WHERE 
-                municipio = %(cidade)s
-            ORDER BY 
-                local
-            """
-            
-            df_areas = execute_query(query_areas, params)
-            
-            if df_areas.empty or 'local' not in df_areas.columns:
-                areas_afetadas = []
-            else:
-                areas_afetadas = df_areas['local'].tolist()
-            
-            # Gerar recomendações com base no nível de risco
-            recomendacoes = AlagamentosModel._gerar_recomendacoes(nivel_risco)
-            
-            return {
-                'probabilidade': round(probabilidade, 2),
-                'nivelRisco': nivel_risco,
-                'recomendacoes': recomendacoes,
-                'areasAfetadas': areas_afetadas
-            }
+            print(f"[DEBUG] Retornando {len(resultado)} registros")
+            return resultado
             
         except Exception as e:
-            print(f"Erro ao obter previsão de alagamentos: {str(e)}")
-            return {
-                'probabilidade': 0,
-                'nivelRisco': 'desconhecido',
-                'recomendacoes': ['Erro ao processar dados'],
-                'areasAfetadas': []
-            }
+            print(f"[DEBUG] Erro ao buscar previsões de alagamentos: {e}")
+            return []
     
     @staticmethod
     def get_historico_alagamentos(cidade, estado, data_inicio, data_fim):
