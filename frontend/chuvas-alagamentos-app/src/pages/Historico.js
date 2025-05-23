@@ -79,6 +79,13 @@ const Historico = () => {
       setLoading(true);
       setError(null);
 
+      if (!cidade || !estado) {
+        setError('Selecione uma cidade e um estado antes de buscar.');
+        console.warn('Tentativa de busca com cidade ou estado vazio:', { cidade, estado });
+        setLoading(false);
+        return;
+      }
+
       if (dataInicio && dataFim && dataInicio > dataFim) {
         setError('A data inicial não pode ser maior que a data final');
         setLoading(false);

@@ -25,7 +25,9 @@ def historico_chuvas():
     estado = request.args.get('estado')
     data_inicio = request.args.get('dataInicio')
     data_fim = request.args.get('dataFim')
-    
+
+    print(f"[DEBUG] Parâmetros recebidos na API /historico/chuvas: cidade={cidade}, estado={estado}, dataInicio={data_inicio}, dataFim={data_fim}")
+
     # Validar parâmetros
     if not cidade or not estado:
         return jsonify({

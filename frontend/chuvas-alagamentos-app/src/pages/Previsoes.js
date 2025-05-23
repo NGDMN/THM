@@ -73,7 +73,8 @@ const Previsoes = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!cidade || !estado) {
-        console.log('Cidade ou estado não definidos:', { cidade, estado });
+        setError('Selecione uma cidade e um estado para buscar previsões.');
+        console.warn('Tentativa de busca com cidade ou estado vazio:', { cidade, estado });
         return;
       }
       

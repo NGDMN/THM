@@ -170,7 +170,9 @@ def previsao_alagamentos():
     # Obter parâmetros
     cidade = request.args.get('cidade')
     estado = request.args.get('estado')
-    
+
+    print(f"[DEBUG] Parâmetros recebidos na API /previsao/alagamentos: cidade={cidade}, estado={estado}")
+
     # Validar parâmetros
     if not cidade or not estado:
         return jsonify({
