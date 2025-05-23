@@ -7,6 +7,7 @@ import Home from './pages/Home';
 import Previsoes from './pages/Previsoes';
 import Historico from './pages/Historico';
 import Sobre from './pages/Sobre';
+import Footer from './components/Footer';
 
 // Contextos
 import { AlertaProvider } from './contexts/AlertaContext';
@@ -53,6 +54,7 @@ function App() {
             <Route path="/historico" element={<Historico />} />
             <Route path="/sobre" element={<Sobre />} />
           </Routes>
+          <Footer />
         </Router>
       </AlertaProvider>
     </ThemeProvider>

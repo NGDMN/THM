@@ -6,9 +6,9 @@ import WaterDropIcon from '@mui/icons-material/WaterDrop';
 const Navbar = () => {
   return (
     <>
-      <AppBar position="fixed">
+      <AppBar position="fixed" sx={{ backgroundColor: 'primary.main', color: 'primary.contrastText' }}>
         <Container maxWidth="lg">
-          <Toolbar disableGutters>
+          <Toolbar disableGutters sx={{ justifyContent: 'center', alignItems: 'center' }}>
             <WaterDropIcon sx={{ mr: 1 }} />
             <Typography
               variant="h6"
@@ -20,9 +20,11 @@ const Navbar = () => {
                 color: 'inherit',
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 700
               }}
             >
-              Sistema de Alerta de Chuvas
+              Sistema de Previsão de Alagamentos RJ/SP
             </Typography>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Button
