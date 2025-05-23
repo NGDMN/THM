@@ -49,5 +49,75 @@ const HexagonPattern = ({ opacity = 0.1, size = 80, variant = 'default' }) => {
   );
 };
 
-// ... (restante do código igual ao arquivo original)
-// ... existing code ... 
+// Componente principal PatternBackground
+const PatternBackground = ({ 
+  children, 
+  variant = 'default', 
+  opacity = 0.1, 
+  size = 80,
+  overlay = false,
+  overlayColor = 'rgba(255, 255, 255, 0.05)'
+}) => {
+  return (
+    <Box
+      sx={{
+        position: 'relative',
+        minHeight: '100vh',
+        width: '100%',
+      }}
+    >
+      <HexagonPattern variant={variant} opacity={opacity} size={size} />
+      
+      {overlay && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: overlayColor,
+            zIndex: 0,
+          }}
+        />
+      )}
+      
+      <Box sx={{ position: 'relative', zIndex: 1 }}>
+        {children}
+      </Box>
+    </Box>
+  );
+};
+
+// Presets para diferentes seções
+export const PATTERN_PRESETS = {
+  hero: {
+    variant: 'hero',
+    opacity: 0.15,
+    size: 120,
+    overlay: true,
+    overlayColor: 'rgba(27, 79, 114, 0.02)'
+  },
+  content: {
+    variant: 'default',
+    opacity: 0.08,
+    size: 80,
+    overlay: false
+  },
+  dense: {
+    variant: 'dense',
+    opacity: 0.05,
+    size: 60,
+    overlay: false
+  },
+  sparse: {
+    variant: 'sparse',
+    opacity: 0.12,
+    size: 100,
+    overlay: true,
+    overlayColor: 'rgba(203, 109, 81, 0.02)'
+  }
+};
+
+// Export padrão
+export default PatternBackground;
