@@ -21,6 +21,44 @@ DB_CONFIG = {
     'port': os.getenv('DB_PORT')
 }
 
+def corrigir_constraint_previsoes():
+    """Corrige a constraint UNIQUE na tabela previsoes"""
+    print("🔧 Corrigindo constraint UNIQUE na tabela previsoes...")
+    
+    try:
+        conn = psycopg2.connect(**DB_CONFIG)
+        cursor = conn.cursor()
+        
+        # Remover constraint existente se houver
+        cursor.execute("""
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM pg_constraint 
+                    WHERE conname = 'unique_previsao'
+                ) THEN
+                    ALTER TABLE previsoes DROP CONSTRAINT unique_previsao;
+                END IF;
+            END $$;
+        """)
+        
+        # Adicionar nova constraint com ON CONFLICT
+        cursor.execute("""
+            ALTER TABLE previsoes 
+            ADD CONSTRAINT unique_previsao 
+            UNIQUE (cidade, estado, data);
+        """)
+        
+        conn.commit()
+        print("✅ Constraint corrigida com sucesso!")
+        
+    except Exception as e:
+        print(f"❌ Erro ao corrigir constraint: {e}")
+        conn.rollback()
+    finally:
+        cursor.close()
+        conn.close()
+
 def create_missing_tables():
     """Cria tabelas que podem estar faltando"""
     print("🔧 Criando tabelas faltantes...")
@@ -37,10 +75,16 @@ def create_missing_tables():
                 estado CHAR(2) NOT NULL,
                 data DATE NOT NULL,
                 precipitacao DECIMAL(5,2),
-                temperatura_min DECIMAL(4,1),
-                temperatura_max DECIMAL(4,1),
+                temp_min DECIMAL(4,1),
+                temp_max DECIMAL(4,1),
                 umidade INTEGER,
+                descricao VARCHAR(200),
+                icone VARCHAR(50),
+                probabilidade_alagamento DECIMAL(4,2) DEFAULT 0,
+                nivel_risco VARCHAR(10) DEFAULT 'baixo',
+                afetados_estimados INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(cidade, estado, data)
             )
         """)
@@ -54,6 +98,7 @@ def create_missing_tables():
                 data DATE NOT NULL,
                 precipitacao_diaria DECIMAL(5,2),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(municipio, estado, data)
             )
         """)
@@ -95,6 +140,10 @@ def create_missing_tables():
         
     except Exception as e:
         print(f"❌ Erro ao criar tabelas: {e}")
+        conn.rollback()
+    finally:
+        cursor.close()
+        conn.close()
 
 def insert_sample_data():
     """Insere dados de exemplo para teste"""
@@ -126,14 +175,28 @@ def insert_sample_data():
                 umidade = random.randint(40, 90)
                 
                 cursor.execute("""
-                    INSERT INTO previsoes (cidade, estado, data, precipitacao, temperatura_min, temperatura_max, umidade)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    INSERT INTO previsoes (
+                        cidade, estado, data, precipitacao, 
+                        temp_min, temp_max, umidade,
+                        probabilidade_alagamento, nivel_risco, afetados_estimados
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     ON CONFLICT (cidade, estado, data) DO UPDATE SET
                         precipitacao = EXCLUDED.precipitacao,
-                        temperatura_min = EXCLUDED.temperatura_min,
-                        temperatura_max = EXCLUDED.temperatura_max,
-                        umidade = EXCLUDED.umidade
-                """, (cidade, estado, data, precipitacao, temp_min, temp_max, umidade))
+                        temp_min = EXCLUDED.temp_min,
+                        temp_max = EXCLUDED.temp_max,
+                        umidade = EXCLUDED.umidade,
+                        probabilidade_alagamento = EXCLUDED.probabilidade_alagamento,
+                        nivel_risco = EXCLUDED.nivel_risco,
+                        afetados_estimados = EXCLUDED.afetados_estimados,
+                        updated_at = CURRENT_TIMESTAMP
+                """, (
+                    cidade, estado, data, precipitacao, 
+                    temp_min, temp_max, umidade,
+                    round(random.uniform(0, 100), 2),
+                    random.choice(['baixo', 'medio', 'alto']),
+                    random.randint(0, 1000)
+                ))
         
         # Inserir dados históricos de chuva (últimos 30 dias)
         for cidade, estado in cities:
@@ -170,11 +233,12 @@ def insert_sample_data():
         conn.commit()
         print("✅ Dados de exemplo inseridos com sucesso!")
         
-        cursor.close()
-        conn.close()
-        
     except Exception as e:
         print(f"❌ Erro ao inserir dados de exemplo: {e}")
+        conn.rollback()
+    finally:
+        cursor.close()
+        conn.close()
 
 def fix_db_utils():
     """Cria uma versão corrigida do db_utils.py"""
@@ -381,6 +445,7 @@ def main():
         print(f"❌ Erro de conexão: {e}")
         return
     
+    corrigir_constraint_previsoes()
     create_missing_tables()
     insert_sample_data()
     fix_db_utils()

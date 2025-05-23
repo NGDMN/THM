@@ -1,372 +1,113 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-db_utils.py - Versão corrigida com debugging avançado
-"""
-
 import os
-import psycopg2
-from psycopg2.extras import RealDictCursor
-from datetime import datetime, date, timedelta
-import logging
-from dotenv import load_dotenv
+import pandas as pd
+from contextlib import contextmanager
+from ..config import DB_CONFIG, USE_MOCK_DATA
 
-# Carregar variáveis do .env
-load_dotenv()
+# Flag para verificar se psycopg2 está disponível
+PSYCOPG2_AVAILABLE = False
 
-# Configurar logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
-# Configuração do banco de dados usando .env
-DATABASE_CONFIG = {
-    'host': os.getenv('DB_HOST'),
-    'database': os.getenv('DB_NAME'),
-    'user': os.getenv('DB_USER'),
-    'password': os.getenv('DB_PASSWORD'),
-    'port': os.getenv('DB_PORT'),
-    'sslmode': 'require'
-}
+# Tentar importar psycopg2, mas não falhar se não estiver disponível
+try:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+    PSYCOPG2_AVAILABLE = True
+except ImportError:
+    print("psycopg2 não está disponível. Usando dados simulados.")
 
 def get_db_connection():
-    """Obtém conexão com o banco de dados"""
+    """
+    Cria uma nova conexão com o banco de dados PostgreSQL
+    
+    Returns:
+        connection: Conexão com o banco ou None se houver erro
+    """
+    if not PSYCOPG2_AVAILABLE or USE_MOCK_DATA:
+        print("Usando dados simulados em vez de acessar o banco de dados.")
+        return None
+        
     try:
-        conn = psycopg2.connect(**DATABASE_CONFIG)
-        return conn
+        connection = psycopg2.connect(
+            dbname=DB_CONFIG['dbname'],
+            user=DB_CONFIG['user'],
+            password=DB_CONFIG['password'],
+            host=DB_CONFIG['host'],
+            port=DB_CONFIG['port']
+        )
+        return connection
     except Exception as e:
-        logger.error(f"Erro ao conectar com o banco: {e}")
-        raise
+        print(f"Erro ao conectar ao PostgreSQL: {str(e)}")
+        return None
 
-def log_query_params(query, params):
-    """Log da query e parâmetros para debugging"""
-    logger.debug(f"Query: {query}")
-    logger.debug(f"Params: {params}")
+def execute_query(query, params=None):
+    """
+    Executa uma query SQL e retorna os resultados como DataFrame
+    
+    Args:
+        query (str): Query SQL a ser executada
+        params (dict): Parâmetros para a query
+        
+    Returns:
+        DataFrame: Resultados da query
+    """
+    try:
+        print(f"[DEBUG] Executando query: {query}")
+        print(f"[DEBUG] Parâmetros: {params}")
+        
+        conn = get_db_connection()
+        if not conn:
+            print("[DEBUG] Erro: Não foi possível conectar ao banco de dados")
+            return pd.DataFrame()
+        
+        # Usar pandas para executar a query e retornar DataFrame
+        df = pd.read_sql_query(query, conn, params=params)
+        conn.close()
+        
+        print(f"[DEBUG] Query executada com sucesso. Registros retornados: {len(df)}")
+        return df
+        
+    except Exception as e:
+        print(f"[DEBUG] Erro ao executar query: {str(e)}")
+        return pd.DataFrame()
 
-def get_previsao_chuvas(cidade, estado):
+def execute_dml(query, params=None):
     """
-    Busca previsões de chuva para uma cidade específica
+    Executa operações DML (INSERT, UPDATE, DELETE) no banco de dados.
+    
+    Args:
+        query (str): Query SQL a ser executada
+        params (dict ou list, optional): Parâmetros para a query. Defaults to None.
+        
+    Returns:
+        int: Número de linhas afetadas ou 0 em caso de erro/simulação
     """
-    logger.info(f"=== get_previsao_chuvas ===")
-    logger.info(f"Cidade: '{cidade}', Estado: '{estado}'")
-    
-    # Validação de entrada
-    if not cidade or not estado:
-        logger.warning(f"Parâmetros inválidos - Cidade: '{cidade}', Estado: '{estado}'")
-        return []
-    
-    conn = None
+    # Se psycopg2 não estiver disponível ou estiver em modo simulação, retornar 0
+    if not PSYCOPG2_AVAILABLE or USE_MOCK_DATA:
+        print("Usando dados simulados em vez de acessar o banco de dados.")
+        return 0
+        
     try:
         conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        if not conn:
+            print("Erro: Não foi possível conectar ao banco de dados")
+            return 0
         
-        # Query melhorada com logs detalhados
-        query = """
-            SELECT 
-                p.id,
-                p.cidade,
-                p.estado,
-                p.data,
-                p.temp_min,
-                p.temp_max,
-                COALESCE(p.precipitacao, 0) as precipitacao,
-                p.umidade,
-                p.descricao,
-                p.icone,
-                COALESCE(p.probabilidade_alagamento, 0) as probabilidade_alagamento,
-                COALESCE(p.nivel_risco, 'baixo') as nivel_risco,
-                COALESCE(p.afetados_estimados, 0) as afetados_estimados,
-                p.created_at,
-                p.updated_at,
-                COALESCE(hist.total_afetados, 0) as historico_afetados
-            FROM previsoes p
-            LEFT JOIN (
-                SELECT 
-                    municipio, 
-                    estado, 
-                    SUM(COALESCE(dh_afetados, 0)) as total_afetados
-                FROM alagamentos 
-                WHERE LOWER(TRIM(municipio)) = LOWER(TRIM(%s)) 
-                AND LOWER(TRIM(estado)) = LOWER(TRIM(%s))
-                GROUP BY municipio, estado
-            ) hist ON LOWER(TRIM(p.cidade)) = LOWER(TRIM(hist.municipio)) 
-                   AND LOWER(TRIM(p.estado)) = LOWER(TRIM(hist.estado))
-            WHERE LOWER(TRIM(p.cidade)) = LOWER(TRIM(%s)) 
-            AND LOWER(TRIM(p.estado)) = LOWER(TRIM(%s))
-            AND p.data >= %s
-            ORDER BY p.data ASC
-        """
+        cursor = conn.cursor()
         
-        params = (cidade, estado, cidade, estado, date.today())
-        log_query_params(query, params)
-        
-        cursor.execute(query, params)
-        resultados = cursor.fetchall()
-        
-        logger.info(f"Resultados encontrados: {len(resultados)}")
-        
-        # Log dos primeiros resultados para debugging
-        for i, row in enumerate(resultados[:3]):
-            logger.debug(f"Resultado {i+1}: Data={row['data']}, Precipitação={row['precipitacao']}")
-        
-        # Converter para formato JSON serializable
-        previsoes = []
-        for row in resultados:
-            previsao = {
-                'id': row['id'],
-                'cidade': row['cidade'],
-                'estado': row['estado'],
-                'data': row['data'].strftime('%Y-%m-%d') if row['data'] else None,
-                'temp_min': float(row['temp_min']) if row['temp_min'] is not None else None,
-                'temp_max': float(row['temp_max']) if row['temp_max'] is not None else None,
-                'precipitacao': float(row['precipitacao']) if row['precipitacao'] is not None else 0.0,
-                'umidade': float(row['umidade']) if row['umidade'] is not None else None,
-                'descricao': row['descricao'],
-                'icone': row['icone'],
-                'probabilidade_alagamento': float(row['probabilidade_alagamento']) if row['probabilidade_alagamento'] is not None else 0.0,
-                'nivel_risco': row['nivel_risco'] or 'baixo',
-                'afetados_estimados': int(row['afetados_estimados']) if row['afetados_estimados'] is not None else 0,
-                'historico_afetados': int(row['historico_afetados']) if row['historico_afetados'] is not None else 0,
-                'created_at': row['created_at'].isoformat() if row['created_at'] else None,
-                'updated_at': row['updated_at'].isoformat() if row['updated_at'] else None
-            }
-            previsoes.append(previsao)
-        
-        cursor.close()
-        return previsoes
-        
-    except Exception as e:
-        logger.error(f"Erro em get_previsao_chuvas: {e}")
-        return []
-    finally:
-        if conn:
-            conn.close()
-
-def get_historico_chuvas(cidade, estado, limite=30):
-    """
-    Busca histórico de chuvas para uma cidade
-    """
-    logger.info(f"=== get_historico_chuvas ===")
-    logger.info(f"Cidade: '{cidade}', Estado: '{estado}', Limite: {limite}")
-    
-    if not cidade or not estado:
-        logger.warning(f"Parâmetros inválidos - Cidade: '{cidade}', Estado: '{estado}'")
-        return []
-    
-    conn = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
-        query = """
-            SELECT 
-                id,
-                municipio as cidade,
-                estado,
-                data,
-                COALESCE(precipitacao_diaria, 0) as precipitacao,
-                created_at,
-                updated_at
-            FROM chuvas_diarias 
-            WHERE LOWER(TRIM(municipio)) = LOWER(TRIM(%s)) 
-            AND LOWER(TRIM(estado)) = LOWER(TRIM(%s))
-            ORDER BY data DESC 
-            LIMIT %s
-        """
-        
-        params = (cidade, estado, limite)
-        log_query_params(query, params)
-        
-        cursor.execute(query, params)
-        resultados = cursor.fetchall()
-        
-        logger.info(f"Histórico de chuvas encontrado: {len(resultados)}")
-        
-        # Converter para formato JSON serializable
-        historico = []
-        for row in resultados:
-            item = {
-                'id': row['id'],
-                'cidade': row['cidade'],
-                'estado': row['estado'],
-                'data': row['data'].strftime('%Y-%m-%d') if row['data'] else None,
-                'precipitacao': float(row['precipitacao']) if row['precipitacao'] is not None else 0.0,
-                'created_at': row['created_at'].isoformat() if row['created_at'] else None,
-                'updated_at': row['updated_at'].isoformat() if row['updated_at'] else None
-            }
-            historico.append(item)
-        
-        cursor.close()
-        return historico
-        
-    except Exception as e:
-        logger.error(f"Erro em get_historico_chuvas: {e}")
-        return []
-    finally:
-        if conn:
-            conn.close()
-
-def get_historico_alagamentos(cidade, estado):
-    """
-    Busca histórico de alagamentos para uma cidade
-    """
-    logger.info(f"=== get_historico_alagamentos ===")
-    logger.info(f"Cidade: '{cidade}', Estado: '{estado}'")
-    
-    if not cidade or not estado:
-        logger.warning(f"Parâmetros inválidos - Cidade: '{cidade}', Estado: '{estado}'")
-        return []
-    
-    conn = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
-        query = """
-            SELECT 
-                id,
-                municipio as cidade,
-                estado,
-                data,
-                local,
-                COALESCE(dh_mortos, 0) as mortos,
-                COALESCE(dh_afetados, 0) as afetados,
-                created_at,
-                updated_at
-            FROM alagamentos 
-            WHERE LOWER(TRIM(municipio)) = LOWER(TRIM(%s)) 
-            AND LOWER(TRIM(estado)) = LOWER(TRIM(%s))
-            ORDER BY data DESC
-        """
-        
-        params = (cidade, estado)
-        log_query_params(query, params)
-        
-        cursor.execute(query, params)
-        resultados = cursor.fetchall()
-        
-        logger.info(f"Histórico de alagamentos encontrado: {len(resultados)}")
-        
-        # Converter para formato JSON serializable
-        alagamentos = []
-        for row in resultados:
-            item = {
-                'id': row['id'],
-                'cidade': row['cidade'],
-                'estado': row['estado'],
-                'data': row['data'].strftime('%Y-%m-%d') if row['data'] else None,
-                'local': row['local'],
-                'mortos': int(row['mortos']) if row['mortos'] is not None else 0,
-                'afetados': int(row['afetados']) if row['afetados'] is not None else 0,
-                'created_at': row['created_at'].isoformat() if row['created_at'] else None,
-                'updated_at': row['updated_at'].isoformat() if row['updated_at'] else None
-            }
-            alagamentos.append(item)
-        
-        cursor.close()
-        return alagamentos
-        
-    except Exception as e:
-        logger.error(f"Erro em get_historico_alagamentos: {e}")
-        return []
-    finally:
-        if conn:
-            conn.close()
-
-def get_municipios():
-    """
-    Busca lista de municípios disponíveis
-    """
-    logger.info("=== get_municipios ===")
-    
-    conn = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
-        # Buscar municípios das previsões e do histórico
-        query = """
-            SELECT DISTINCT cidade, estado, 'previsao' as fonte
-            FROM previsoes
-            WHERE cidade IS NOT NULL AND estado IS NOT NULL
-            UNION
-            SELECT DISTINCT municipio as cidade, estado, 'historico' as fonte
-            FROM chuvas_diarias
-            WHERE municipio IS NOT NULL AND estado IS NOT NULL
-            UNION
-            SELECT DISTINCT municipio as cidade, estado, 'alagamento' as fonte
-            FROM alagamentos
-            WHERE municipio IS NOT NULL AND estado IS NOT NULL
-            ORDER BY estado, cidade
-        """
-        
-        cursor.execute(query)
-        resultados = cursor.fetchall()
-        
-        logger.info(f"Municípios encontrados: {len(resultados)}")
-        
-        # Agrupar por município
-        municipios_dict = {}
-        for row in resultados:
-            chave = f"{row['cidade']}_{row['estado']}"
-            if chave not in municipios_dict:
-                municipios_dict[chave] = {
-                    'cidade': row['cidade'],
-                    'estado': row['estado'],
-                    'fontes': []
-                }
-            municipios_dict[chave]['fontes'].append(row['fonte'])
-        
-        municipios = list(municipios_dict.values())
-        cursor.close()
-        return municipios
-        
-    except Exception as e:
-        logger.error(f"Erro em get_municipios: {e}")
-        return []
-    finally:
-        if conn:
-            conn.close()
-
-# Funções de teste e debugging
-def test_api_functions():
-    """Testa todas as funções da API"""
-    print("🧪 TESTANDO FUNÇÕES DA API")
-    print("=" * 50)
-    
-    # Verificar variáveis de ambiente
-    print("🔧 Verificando variáveis de ambiente:")
-    for key in ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_PORT']:
-        value = os.getenv(key)
-        if key == 'DB_PASSWORD':
-            print(f"   {key}: {'***' if value else 'NÃO ENCONTRADO'}")
+        if params:
+            if isinstance(params, list):
+                cursor.executemany(query, params)
+            else:
+                cursor.execute(query, params)
         else:
-            print(f"   {key}: {value if value else 'NÃO ENCONTRADO'}")
-    
-    if not all([os.getenv(key) for key in ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_PORT']]):
-        print("❌ Algumas variáveis de ambiente não foram encontradas!")
-        return
-    
-    # Teste 1: Municípios
-    print("\n1. Testando get_municipios()...")
-    municipios = get_municipios()
-    print(f"   ✅ {len(municipios)} municípios encontrados")
-    
-    # Teste 2: Previsão
-    print("\n2. Testando get_previsao_chuvas()...")
-    previsoes = get_previsao_chuvas("Rio de Janeiro", "RJ")
-    print(f"   ✅ {len(previsoes)} previsões encontradas")
-    
-    # Teste 3: Histórico de chuvas
-    print("\n3. Testando get_historico_chuvas()...")
-    historico = get_historico_chuvas("Rio de Janeiro", "RJ")
-    print(f"   ✅ {len(historico)} registros de chuva encontrados")
-    
-    # Teste 4: Histórico de alagamentos
-    print("\n4. Testando get_historico_alagamentos()...")
-    alagamentos = get_historico_alagamentos("Rio de Janeiro", "RJ")
-    print(f"   ✅ {len(alagamentos)} registros de alagamentos encontrados")
-    
-    print("\n✅ Todos os testes concluídos!")
-
-if __name__ == "__main__":
-    test_api_functions()
+            cursor.execute(query)
+            
+        rows_affected = cursor.rowcount
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return rows_affected
+        
+    except Exception as e:
+        print(f"Erro ao executar operação DML: {str(e)}")
+        return 0
