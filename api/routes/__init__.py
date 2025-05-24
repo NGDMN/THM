@@ -1,1 +1,3 @@
-# Pacote de rotas para a API 
+"""
+Pacote de rotas da API
+""" 
