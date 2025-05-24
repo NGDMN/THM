@@ -25,54 +25,39 @@ const Historico = () => {
   const [chuvas, setChuvas] = useState([]);
   const [alagamentos, setAlagamentos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingData, setLoadingData] = useState(false); // Loading separado para busca de dados
+  const [loadingData, setLoadingData] = useState(false);
   const [error, setError] = useState(null);
   const [estado, setEstado] = useState('RJ');
   const [cidade, setCidade] = useState('');
-  const [municipios, setMunicipios] = useState({});
+  const [municipios, setMunicipios] = useState([]);
   const [dataInicio, setDataInicio] = useState(null);
   const [dataFim, setDataFim] = useState(null);
-  const [municipiosCarregados, setMunicipiosCarregados] = useState(false); // Flag para controlar carregamento
 
-  // Carregar municípios apenas uma vez na inicialização
+  // Carregar municípios quando o estado muda
   useEffect(() => {
     const fetchMunicipios = async () => {
-      if (municipiosCarregados) return; // Evita recarregamento desnecessário
+      if (!estado) return;
       
       setLoading(true);
       try {
+        console.log('🏙️ Carregando municípios para estado:', estado);
         const dados = await getMunicipios(estado);
-        console.log('Dados de municípios recebidos:', dados);
+        console.log('✅ Municípios recebidos:', dados?.length || 0, 'registros');
         
-        // Verificação mais robusta dos dados
-        let municipiosPorEstado = {};
-        if (Array.isArray(dados)) {
-          municipiosPorEstado = dados.reduce((acc, municipio) => {
-            if (municipio && municipio.uf && municipio.nome) {
-              if (!acc[municipio.uf]) {
-                acc[municipio.uf] = [];
-              }
-              acc[municipio.uf].push(municipio.nome);
-            }
-            return acc;
-          }, {});
-        }
-        
-        setMunicipios(municipiosPorEstado);
-        
-        // Verificação segura antes de acessar o array
-        if (municipiosPorEstado[estado] && Array.isArray(municipiosPorEstado[estado]) && municipiosPorEstado[estado].length > 0) {
-          setCidade(municipiosPorEstado[estado][0]);
+        if (Array.isArray(dados) && dados.length > 0) {
+          setMunicipios(dados);
+          // Define a primeira cidade como padrão
+          setCidade(dados[0].nome || dados[0]);
+          setError(null);
         } else {
+          setMunicipios([]);
           setCidade('');
+          setError('Nenhum município encontrado para este estado');
         }
-        
-        setMunicipiosCarregados(true); // Marca como carregado
-        setError(null);
       } catch (err) {
-        console.error('Erro ao carregar municípios:', err);
+        console.error('❌ Erro ao carregar municípios:', err);
         setError('Não foi possível carregar a lista de municípios');
-        setMunicipios({});
+        setMunicipios([]);
         setCidade('');
       } finally {
         setLoading(false);
@@ -80,63 +65,54 @@ const Historico = () => {
     };
     
     fetchMunicipios();
-  }, []); // Removido 'estado' das dependências para evitar loop
-
-  // Efeito separado para atualizar cidade quando estado muda (após municípios carregados)
-  useEffect(() => {
-    if (municipiosCarregados && municipios[estado]) {
-      if (Array.isArray(municipios[estado]) && municipios[estado].length > 0) {
-        setCidade(municipios[estado][0]);
-      } else {
-        setCidade('');
-      }
-    }
-  }, [estado, municipiosCarregados, municipios]);
+  }, [estado]);
 
   const handleBuscar = async () => {
+    if (!cidade || !estado) {
+      setError('Selecione uma cidade e um estado antes de buscar.');
+      return;
+    }
+
+    if (dataInicio && dataFim && new Date(dataInicio) > new Date(dataFim)) {
+      setError('A data inicial não pode ser maior que a data final');
+      return;
+    }
+
+    setLoadingData(true);
+    setError(null);
+
     try {
-      setLoadingData(true); // Use loading separado para não afetar a interface
-      setError(null);
-
-      if (!cidade || !estado) {
-        setError('Selecione uma cidade e um estado antes de buscar.');
-        console.warn('Tentativa de busca com cidade ou estado vazio:', { cidade, estado });
-        setLoadingData(false);
-        return;
-      }
-
-      if (dataInicio && dataFim && dataInicio > dataFim) {
-        setError('A data inicial não pode ser maior que a data final');
-        setLoadingData(false);
-        return;
-      }
-
-      const dataInicioFormatada = dataInicio ? format(new Date(dataInicio), 'yyyy-MM-dd') : format(new Date('2020-01-01'), 'yyyy-MM-dd');
-      const dataFimFormatada = dataFim ? format(new Date(dataFim), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
+      // Definir datas padrão se não informadas
+      const dataInicioFormatada = dataInicio || '2020-01-01';
+      const dataFimFormatada = dataFim || format(new Date(), 'yyyy-MM-dd');
       
-      console.log('Buscando histórico para:', { cidade, estado, dataInicioFormatada, dataFimFormatada });
+      console.log('🔍 Buscando histórico para:', { 
+        cidade, 
+        estado, 
+        dataInicioFormatada, 
+        dataFimFormatada 
+      });
       
       const [dadosChuvas, dadosAlagamentos] = await Promise.all([
         getHistoricoChuvas(cidade, estado, dataInicioFormatada, dataFimFormatada),
         getHistoricoAlagamentos(cidade, estado, dataInicioFormatada, dataFimFormatada)
       ]);
 
-      console.log('Dados de chuvas recebidos:', dadosChuvas);
-      console.log('Dados de alagamentos recebidos:', dadosAlagamentos);
+      console.log('✅ Dados recebidos - Chuvas:', dadosChuvas?.length || 0, 'Alagamentos:', dadosAlagamentos?.length || 0);
 
-      // Garantir que sempre temos arrays
+      // Garantir que sempre temos arrays válidos
       const chuvasArray = Array.isArray(dadosChuvas) ? dadosChuvas : [];
       const alagamentosArray = Array.isArray(dadosAlagamentos) ? dadosAlagamentos : [];
 
-      if (chuvasArray.length === 0) {
-        setError('Nenhum dado encontrado para o período selecionado');
-      }
-      
       setChuvas(chuvasArray);
       setAlagamentos(alagamentosArray);
+
+      if (chuvasArray.length === 0 && alagamentosArray.length === 0) {
+        setError('Nenhum dado encontrado para o período selecionado');
+      }
     } catch (err) {
-      console.error('Erro ao carregar histórico:', err);
-      setError('Não foi possível carregar os dados históricos');
+      console.error('❌ Erro ao carregar histórico:', err);
+      setError('Erro ao carregar dados históricos: ' + (err.message || 'Erro desconhecido'));
       setChuvas([]);
       setAlagamentos([]);
     } finally {
@@ -151,7 +127,7 @@ const Historico = () => {
   const handleEstadoChange = (event) => {
     const novoEstado = event.target.value;
     setEstado(novoEstado);
-    // A cidade será atualizada automaticamente pelo useEffect
+    setCidade(''); // Limpar cidade ao mudar estado
   };
 
   const handleCidadeChange = (event) => {
@@ -162,9 +138,16 @@ const Historico = () => {
     if (!Array.isArray(chuvas) || chuvas.length === 0) {
       return { total: 0, media: 0, maxima: 0 };
     }
-    const total = chuvas.reduce((soma, item) => soma + (item.precipitacao || 0), 0);
-    const media = total / chuvas.length;
-    const maxima = Math.max(...chuvas.map(item => item.precipitacao || 0));
+    
+    const valores = chuvas.map(item => {
+      const precip = item.precipitacao || item.mm || item.valor || 0;
+      return typeof precip === 'number' ? precip : parseFloat(precip) || 0;
+    });
+    
+    const total = valores.reduce((soma, valor) => soma + valor, 0);
+    const media = total / valores.length;
+    const maxima = Math.max(...valores);
+    
     return {
       total: parseFloat(total.toFixed(1)),
       media: parseFloat(media.toFixed(1)),
@@ -183,33 +166,32 @@ const Historico = () => {
     try {
       if (!dataString) return 'Data não disponível';
       
-      // Tenta diferentes formatos de data
       let data;
       if (dataString.includes('T')) {
-        // Formato ISO
         data = parseISO(dataString);
       } else if (dataString.includes('-')) {
-        // Formato YYYY-MM-DD
-        data = new Date(dataString);
+        data = new Date(dataString + 'T00:00:00');
       } else {
-        // Tenta converter direto
         data = new Date(dataString);
       }
       
       if (isNaN(data.getTime())) {
-        console.warn('Data inválida:', dataString);
+        console.warn('⚠️ Data inválida:', dataString);
         return 'Data inválida';
       }
       
       return format(data, 'dd/MM/yyyy', { locale: ptBR });
     } catch (error) {
-      console.error('Erro ao formatar data:', error);
+      console.error('❌ Erro ao formatar data:', error, 'Data:', dataString);
       return 'Data inválida';
     }
   };
 
-  // Loading inicial apenas para municípios
-  if (loading && !municipiosCarregados) {
+  const getPrecipitacao = (item) => {
+    return item.precipitacao || item.mm || item.valor || 0;
+  };
+
+  if (loading) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
@@ -227,7 +209,7 @@ const Historico = () => {
           Histórico de Chuvas e Alagamentos
         </Typography>
 
-        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
           <FormControl sx={{ minWidth: 180 }}>
             <InputLabel id="estado-label">Estado</InputLabel>
             <Select
@@ -249,12 +231,17 @@ const Historico = () => {
               value={cidade}
               label="Cidade"
               onChange={handleCidadeChange}
-              disabled={!municipios[estado] || municipios[estado].length === 0}
+              disabled={municipios.length === 0}
             >
-              {municipios[estado] && Array.isArray(municipios[estado]) ? 
-                municipios[estado].map((cid) => (
-                  <MenuItem key={cid} value={cid}>{cid}</MenuItem>
-                )) : 
+              {municipios.length > 0 ? 
+                municipios.map((municipio, index) => {
+                  const nomeMunicipio = municipio.nome || municipio;
+                  return (
+                    <MenuItem key={index} value={nomeMunicipio}>
+                      {nomeMunicipio}
+                    </MenuItem>
+                  );
+                }) : 
                 <MenuItem value="">Nenhum município disponível</MenuItem>
               }
             </Select>
@@ -279,8 +266,8 @@ const Historico = () => {
           />
 
           <Button 
+            type="submit"
             variant="contained" 
-            onClick={handleSubmit}
             disabled={loadingData || !cidade}
           >
             {loadingData ? 'Buscando...' : 'Buscar'}
@@ -296,30 +283,32 @@ const Historico = () => {
           <Alert severity="error" sx={{ mt: 2 }}>
             {error}
           </Alert>
-        ) : Array.isArray(chuvas) && chuvas.length > 0 ? (
+        ) : (chuvas.length > 0 || alagamentos.length > 0) ? (
           <>
-            <Paper sx={{ p: 3, mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Estatísticas do Período
-              </Typography>
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={4}>
-                  <Typography variant="subtitle1">
-                    Precipitação Total: {estatisticasChuvas.total} mm
-                  </Typography>
+            {chuvas.length > 0 && (
+              <Paper sx={{ p: 3, mb: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  Estatísticas do Período - {cidade}, {estado}
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={4}>
+                    <Typography variant="subtitle1">
+                      Precipitação Total: {estatisticasChuvas.total} mm
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Typography variant="subtitle1">
+                      Média Diária: {estatisticasChuvas.media} mm
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Typography variant="subtitle1">
+                      Máxima Registrada: {estatisticasChuvas.maxima} mm
+                    </Typography>
+                  </Grid>
                 </Grid>
-                <Grid item xs={12} md={4}>
-                  <Typography variant="subtitle1">
-                    Média Diária: {estatisticasChuvas.media} mm
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <Typography variant="subtitle1">
-                    Máxima Registrada: {estatisticasChuvas.maxima} mm
-                  </Typography>
-                </Grid>
-              </Grid>
-            </Paper>
+              </Paper>
+            )}
 
             <TableContainer component={Paper}>
               <Table>
@@ -332,21 +321,35 @@ const Historico = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {chuvas.map((chuva, index) => {
-                    const alagamentosDoDia = Array.isArray(alagamentos) ? alagamentos.filter(
-                      a => format(new Date(a.data), 'yyyy-MM-dd') === format(new Date(chuva.data), 'yyyy-MM-dd')
-                    ) : [];
+                  {chuvas.length > 0 ? chuvas.map((chuva, index) => {
+                    const dataItem = chuva.data || chuva.date;
+                    const alagamentosDoDia = alagamentos.filter(
+                      a => {
+                        try {
+                          const dataAlagamento = a.data || a.date;
+                          if (!dataItem || !dataAlagamento) return false;
+                          
+                          const dataChuvaStr = format(new Date(dataItem), 'yyyy-MM-dd');
+                          const dataAlagamentoStr = format(new Date(dataAlagamento), 'yyyy-MM-dd');
+                          return dataChuvaStr === dataAlagamentoStr;
+                        } catch (e) {
+                          return false;
+                        }
+                      }
+                    );
                     
                     return (
                       <TableRow 
-                        key={chuva.data || index}
+                        key={`${dataItem}-${index}`}
                         sx={{ 
                           bgcolor: alagamentosDoDia.length > 0 ? '#fff3e0' : 'inherit',
                           '&:hover': { bgcolor: alagamentosDoDia.length > 0 ? '#ffe0b2' : '#f5f5f5' }
                         }}
                       >
-                        <TableCell>{formatarData(chuva.data)}</TableCell>
-                        <TableCell align="right">{(chuva.precipitacao || 0).toFixed(1)}</TableCell>
+                        <TableCell>{formatarData(dataItem)}</TableCell>
+                        <TableCell align="right">
+                          {getPrecipitacao(chuva).toFixed(1)}
+                        </TableCell>
                         <TableCell>
                           {alagamentosDoDia.length > 0 ? (
                             <Chip 
@@ -367,11 +370,13 @@ const Historico = () => {
                           {alagamentosDoDia.length > 0 && (
                             <Box>
                               <Typography variant="body2" color="warning.dark">
-                                Nível: {alagamentosDoDia[0].nivelAlagamento || 'N/A'}
+                                Nível: {alagamentosDoDia[0].nivelAlagamento || alagamentosDoDia[0].nivel || 'N/A'}
                               </Typography>
-                              {alagamentosDoDia[0].areasAfetadas && Array.isArray(alagamentosDoDia[0].areasAfetadas) && (
+                              {alagamentosDoDia[0].areasAfetadas && (
                                 <Typography variant="body2">
-                                  Áreas: {alagamentosDoDia[0].areasAfetadas.join(', ')}
+                                  Áreas: {Array.isArray(alagamentosDoDia[0].areasAfetadas) 
+                                    ? alagamentosDoDia[0].areasAfetadas.join(', ')
+                                    : alagamentosDoDia[0].areasAfetadas}
                                 </Typography>
                               )}
                             </Box>
@@ -379,7 +384,40 @@ const Historico = () => {
                         </TableCell>
                       </TableRow>
                     );
-                  })}
+                  }) : alagamentos.map((alagamento, index) => (
+                    <TableRow 
+                      key={`alagamento-${index}`}
+                      sx={{ 
+                        bgcolor: '#fff3e0',
+                        '&:hover': { bgcolor: '#ffe0b2' }
+                      }}
+                    >
+                      <TableCell>{formatarData(alagamento.data || alagamento.date)}</TableCell>
+                      <TableCell align="right">N/A</TableCell>
+                      <TableCell>
+                        <Chip 
+                          label="Sim" 
+                          color="warning" 
+                          size="small"
+                          icon={<WarningAmber />}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Box>
+                          <Typography variant="body2" color="warning.dark">
+                            Nível: {alagamento.nivelAlagamento || alagamento.nivel || 'N/A'}
+                          </Typography>
+                          {alagamento.areasAfetadas && (
+                            <Typography variant="body2">
+                              Áreas: {Array.isArray(alagamento.areasAfetadas) 
+                                ? alagamento.areasAfetadas.join(', ')
+                                : alagamento.areasAfetadas}
+                            </Typography>
+                          )}
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </TableContainer>
