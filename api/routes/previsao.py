@@ -6,9 +6,14 @@ from ..services.previsao_service import PrevisaoService
 import json
 import psycopg2
 from ..config import DB_CONFIG
+from ..utils.db_utils import execute_query
+import logging
 
 # Criar blueprint para rotas de previsão
 previsao_bp = Blueprint('previsao', __name__)
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 def get_db_connection():
     """Cria uma conexão com o banco de dados"""
@@ -107,95 +112,156 @@ def alertas_atuais():
             'mensagem': str(e)
         }), 500
 
-@previsao_bp.route('/chuvas', methods=['GET'])
-def previsao_chuvas():
-    """
-    Endpoint para previsão de chuvas
-    
-    Query params:
-        cidade (str): Nome da cidade
-        estado (str): Sigla do estado (RJ ou SP)
-    
-    Returns:
-        JSON com dados de previsão
-    """
-    # Obter parâmetros
-    cidade = request.args.get('cidade')
-    estado = request.args.get('estado')
-    
-    # Log dos parâmetros recebidos
-    print(f"[DEBUG] Parâmetros recebidos na API: cidade={cidade}, estado={estado}")
-    
-    # Validar parâmetros
-    if not cidade or not estado:
-        print("[DEBUG] Parâmetros inválidos: cidade ou estado ausentes")
-        return jsonify({
-            'erro': 'Parâmetros inválidos',
-            'mensagem': 'Os parâmetros cidade e estado são obrigatórios'
-        }), 400
-    
-    # Validar estado (apenas RJ e SP)
-    if estado not in ['RJ', 'SP']:
-        print(f"[DEBUG] Estado inválido: {estado}")
-        return jsonify({
-            'erro': 'Estado inválido',
-            'mensagem': 'O estado deve ser RJ ou SP'
-        }), 400
-    
-    # Obter dados do modelo
+@previsao_bp.route('/previsao/chuvas', methods=['GET'])
+def get_previsao_chuvas():
+    """Obter previsão de chuvas com debug completo"""
     try:
-        print("[DEBUG] Iniciando busca de dados no modelo")
-        dados = ChuvasModel.get_previsao_chuvas(cidade, estado)
-        print(f"[DEBUG] Dados retornados do modelo: {len(dados) if isinstance(dados, list) else 'não é lista'}")
-        return jsonify(dados)
+        cidade = request.args.get('cidade', '').strip()
+        estado = request.args.get('estado', '').strip()
+        
+        logger.debug(f"=== PREVISÃO CHUVAS DEBUG ===")
+        logger.debug(f"Parâmetros: cidade='{cidade}', estado='{estado}'")
+        
+        if not cidade or not estado:
+            logger.error("Parâmetros obrigatórios ausentes")
+            return jsonify({'error': 'Parâmetros cidade e estado são obrigatórios'}), 400
+        
+        # Buscar previsões dos próximos 7 dias
+        query = """
+        SELECT 
+            data,
+            municipio,
+            estado,
+            precipitacao_prevista as precipitacao,
+            temperatura_prevista as temperatura,
+            umidade_prevista as umidade,
+            probabilidade_chuva,
+            created_at
+        FROM previsao_chuvas 
+        WHERE LOWER(TRIM(municipio)) = LOWER(TRIM(%(cidade)s))
+        AND UPPER(TRIM(estado)) = UPPER(TRIM(%(estado)s))
+        AND data >= CURRENT_DATE
+        AND data <= CURRENT_DATE + INTERVAL '7 days'
+        ORDER BY data ASC
+        """
+        
+        params = {
+            'cidade': cidade,
+            'estado': estado
+        }
+        
+        logger.debug(f"Query previsão: {query}")
+        logger.debug(f"Parâmetros: {params}")
+        
+        result = execute_query(query, params)
+        
+        if result.empty:
+            # Verificar se existem dados para outras cidades
+            check_query = "SELECT DISTINCT municipio, estado FROM previsao_chuvas WHERE UPPER(estado) = UPPER(%(estado)s)"
+            check_result = execute_query(check_query, {'estado': estado})
+            available_cities = check_result.to_dict('records') if not check_result.empty else []
+            
+            logger.debug(f"Cidades disponíveis para previsão: {available_cities}")
+            
+            return jsonify({
+                'data': [],
+                'debug_info': {
+                    'cidade_buscada': cidade,
+                    'estado_buscado': estado,
+                    'cidades_disponiveis': available_cities
+                }
+            })
+        
+        dados = result.to_dict('records')
+        
+        # Processar dados
+        for item in dados:
+            if 'data' in item and item['data']:
+                item['data'] = str(item['data'])
+            if 'precipitacao' in item and item['precipitacao'] is not None:
+                item['precipitacao'] = float(item['precipitacao'])
+            if 'temperatura' in item and item['temperatura'] is not None:
+                item['temperatura'] = float(item['temperatura'])
+            if 'umidade' in item and item['umidade'] is not None:
+                item['umidade'] = int(item['umidade'])
+        
+        logger.debug(f"Previsões encontradas: {len(dados)}")
+        
+        return jsonify({
+            'data': dados,
+            'total': len(dados)
+        })
+        
     except Exception as e:
-        print(f"[DEBUG] Erro ao obter previsão: {str(e)}")
-        return jsonify({
-            'erro': 'Erro ao obter previsão',
-            'mensagem': str(e)
-        }), 500
+        logger.error(f"Erro ao buscar previsão de chuvas: {str(e)}")
+        return jsonify({'error': 'Erro interno do servidor', 'message': str(e)}), 500
 
-@previsao_bp.route('/alagamentos', methods=['GET'])
-def previsao_alagamentos():
-    """
-    Endpoint para previsão de risco de alagamentos
-    
-    Query params:
-        cidade (str): Nome da cidade
-        estado (str): Sigla do estado (RJ ou SP)
-    
-    Returns:
-        JSON com dados de previsão de risco
-    """
-    # Obter parâmetros
-    cidade = request.args.get('cidade')
-    estado = request.args.get('estado')
-
-    print(f"[DEBUG] Parâmetros recebidos na API /previsao/alagamentos: cidade={cidade}, estado={estado}")
-
-    # Validar parâmetros
-    if not cidade or not estado:
-        return jsonify({
-            'erro': 'Parâmetros inválidos',
-            'mensagem': 'Os parâmetros cidade e estado são obrigatórios'
-        }), 400
-    
-    # Validar estado (apenas RJ e SP)
-    if estado not in ['RJ', 'SP']:
-        return jsonify({
-            'erro': 'Estado inválido',
-            'mensagem': 'O estado deve ser RJ ou SP'
-        }), 400
-    
-    # Obter dados do modelo
+@previsao_bp.route('/previsao/alagamentos', methods=['GET'])
+def get_previsao_alagamentos():
+    """Obter previsão de alagamentos"""
     try:
-        dados = AlagamentosModel.get_previsao_alagamentos(cidade, estado)
-        return jsonify(dados)
-    except Exception as e:
+        cidade = request.args.get('cidade', '').strip()
+        estado = request.args.get('estado', '').strip()
+        
+        logger.debug(f"=== PREVISÃO ALAGAMENTOS DEBUG ===")
+        logger.debug(f"Parâmetros: cidade='{cidade}', estado='{estado}'")
+        
+        if not cidade or not estado:
+            return jsonify({'error': 'Parâmetros cidade e estado são obrigatórios'}), 400
+        
+        query = """
+        SELECT 
+            data,
+            municipio,
+            estado,
+            nivel_risco,
+            probabilidade,
+            recomendacoes,
+            areas_risco,
+            created_at
+        FROM previsao_alagamentos 
+        WHERE LOWER(TRIM(municipio)) = LOWER(TRIM(%(cidade)s))
+        AND UPPER(TRIM(estado)) = UPPER(TRIM(%(estado)s))
+        AND data >= CURRENT_DATE
+        AND data <= CURRENT_DATE + INTERVAL '7 days'
+        ORDER BY data ASC
+        """
+        
+        params = {
+            'cidade': cidade,
+            'estado': estado
+        }
+        
+        result = execute_query(query, params)
+        dados = result.to_dict('records')
+        
+        # Processar dados JSON
+        for item in dados:
+            if 'data' in item and item['data']:
+                item['data'] = str(item['data'])
+            if 'recomendacoes' in item and isinstance(item['recomendacoes'], str):
+                try:
+                    import json
+                    item['recomendacoes'] = json.loads(item['recomendacoes'])
+                except:
+                    item['recomendacoes'] = []
+            if 'areas_risco' in item and isinstance(item['areas_risco'], str):
+                try:
+                    import json
+                    item['areas_risco'] = json.loads(item['areas_risco'])
+                except:
+                    item['areas_risco'] = []
+        
+        logger.debug(f"Previsões de alagamento encontradas: {len(dados)}")
+        
         return jsonify({
-            'erro': 'Erro ao obter previsão de alagamentos',
-            'mensagem': str(e)
-        }), 500
+            'data': dados,
+            'total': len(dados)
+        })
+        
+    except Exception as e:
+        logger.error(f"Erro ao buscar previsão de alagamentos: {str(e)}")
+        return jsonify({'error': 'Erro interno do servidor', 'message': str(e)}), 500
 
 @previsao_bp.route('/clima', methods=['GET'])
 def previsao_clima():
