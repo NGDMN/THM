@@ -25,15 +25,20 @@ const Historico = () => {
   const [chuvas, setChuvas] = useState([]);
   const [alagamentos, setAlagamentos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingData, setLoadingData] = useState(false); // Loading separado para busca de dados
   const [error, setError] = useState(null);
   const [estado, setEstado] = useState('RJ');
   const [cidade, setCidade] = useState('');
   const [municipios, setMunicipios] = useState({});
   const [dataInicio, setDataInicio] = useState(null);
   const [dataFim, setDataFim] = useState(null);
+  const [municipiosCarregados, setMunicipiosCarregados] = useState(false); // Flag para controlar carregamento
 
+  // Carregar municípios apenas uma vez na inicialização
   useEffect(() => {
     const fetchMunicipios = async () => {
+      if (municipiosCarregados) return; // Evita recarregamento desnecessário
+      
       setLoading(true);
       try {
         const dados = await getMunicipios(estado);
@@ -61,6 +66,8 @@ const Historico = () => {
         } else {
           setCidade('');
         }
+        
+        setMunicipiosCarregados(true); // Marca como carregado
         setError(null);
       } catch (err) {
         console.error('Erro ao carregar municípios:', err);
@@ -71,29 +78,41 @@ const Historico = () => {
         setLoading(false);
       }
     };
+    
     fetchMunicipios();
-  }, [estado]);
+  }, []); // Removido 'estado' das dependências para evitar loop
+
+  // Efeito separado para atualizar cidade quando estado muda (após municípios carregados)
+  useEffect(() => {
+    if (municipiosCarregados && municipios[estado]) {
+      if (Array.isArray(municipios[estado]) && municipios[estado].length > 0) {
+        setCidade(municipios[estado][0]);
+      } else {
+        setCidade('');
+      }
+    }
+  }, [estado, municipiosCarregados, municipios]);
 
   const handleBuscar = async () => {
     try {
-      setLoading(true);
+      setLoadingData(true); // Use loading separado para não afetar a interface
       setError(null);
 
       if (!cidade || !estado) {
         setError('Selecione uma cidade e um estado antes de buscar.');
         console.warn('Tentativa de busca com cidade ou estado vazio:', { cidade, estado });
-        setLoading(false);
+        setLoadingData(false);
         return;
       }
 
       if (dataInicio && dataFim && dataInicio > dataFim) {
         setError('A data inicial não pode ser maior que a data final');
-        setLoading(false);
+        setLoadingData(false);
         return;
       }
 
-      const dataInicioFormatada = dataInicio ? format(dataInicio, 'yyyy-MM-dd') : format(new Date('2020-01-01'), 'yyyy-MM-dd');
-      const dataFimFormatada = dataFim ? format(dataFim, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
+      const dataInicioFormatada = dataInicio ? format(new Date(dataInicio), 'yyyy-MM-dd') : format(new Date('2020-01-01'), 'yyyy-MM-dd');
+      const dataFimFormatada = dataFim ? format(new Date(dataFim), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
       
       console.log('Buscando histórico para:', { cidade, estado, dataInicioFormatada, dataFimFormatada });
       
@@ -121,7 +140,7 @@ const Historico = () => {
       setChuvas([]);
       setAlagamentos([]);
     } finally {
-      setLoading(false);
+      setLoadingData(false);
     }
   };
 
@@ -132,12 +151,7 @@ const Historico = () => {
   const handleEstadoChange = (event) => {
     const novoEstado = event.target.value;
     setEstado(novoEstado);
-    // Verificação segura antes de acessar o array
-    if (municipios[novoEstado] && Array.isArray(municipios[novoEstado]) && municipios[novoEstado].length > 0) {
-      setCidade(municipios[novoEstado][0]);
-    } else {
-      setCidade('');
-    }
+    // A cidade será atualizada automaticamente pelo useEffect
   };
 
   const handleCidadeChange = (event) => {
@@ -165,11 +179,13 @@ const Historico = () => {
     await handleBuscar();
   };
 
-  if (loading && !cidade) {
+  // Loading inicial apenas para municípios
+  if (loading && !municipiosCarregados) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
           <CircularProgress />
+          <Typography sx={{ ml: 2 }}>Carregando municípios...</Typography>
         </Box>
       </Container>
     );
@@ -236,15 +252,16 @@ const Historico = () => {
           <Button 
             variant="contained" 
             onClick={handleSubmit}
-            disabled={loading || !cidade}
+            disabled={loadingData || !cidade}
           >
-            {loading ? 'Buscando...' : 'Buscar'}
+            {loadingData ? 'Buscando...' : 'Buscar'}
           </Button>
         </Box>
 
-        {loading ? (
+        {loadingData ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
             <CircularProgress />
+            <Typography sx={{ ml: 2 }}>Carregando dados históricos...</Typography>
           </Box>
         ) : error ? (
           <Alert severity="error" sx={{ mt: 2 }}>
