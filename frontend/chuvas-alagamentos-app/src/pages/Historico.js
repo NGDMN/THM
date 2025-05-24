@@ -5,7 +5,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { getHistoricoChuvas, getHistoricoAlagamentos, getMunicipios } from '../services/alertaService';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import Diagnostico from '../components/Diagnostico';
 import { List, ListItem, ListItemText } from '@mui/material';
 import { WarningAmber } from '@mui/icons-material';
@@ -179,6 +179,35 @@ const Historico = () => {
     await handleBuscar();
   };
 
+  const formatarData = (dataString) => {
+    try {
+      if (!dataString) return 'Data não disponível';
+      
+      // Tenta diferentes formatos de data
+      let data;
+      if (dataString.includes('T')) {
+        // Formato ISO
+        data = parseISO(dataString);
+      } else if (dataString.includes('-')) {
+        // Formato YYYY-MM-DD
+        data = new Date(dataString);
+      } else {
+        // Tenta converter direto
+        data = new Date(dataString);
+      }
+      
+      if (isNaN(data.getTime())) {
+        console.warn('Data inválida:', dataString);
+        return 'Data inválida';
+      }
+      
+      return format(data, 'dd/MM/yyyy', { locale: ptBR });
+    } catch (error) {
+      console.error('Erro ao formatar data:', error);
+      return 'Data inválida';
+    }
+  };
+
   // Loading inicial apenas para municípios
   if (loading && !municipiosCarregados) {
     return (
@@ -316,7 +345,7 @@ const Historico = () => {
                           '&:hover': { bgcolor: alagamentosDoDia.length > 0 ? '#ffe0b2' : '#f5f5f5' }
                         }}
                       >
-                        <TableCell>{format(new Date(chuva.data), 'dd/MM/yyyy')}</TableCell>
+                        <TableCell>{formatarData(chuva.data)}</TableCell>
                         <TableCell align="right">{(chuva.precipitacao || 0).toFixed(1)}</TableCell>
                         <TableCell>
                           {alagamentosDoDia.length > 0 ? (

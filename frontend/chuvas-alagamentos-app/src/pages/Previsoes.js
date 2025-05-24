@@ -4,7 +4,8 @@ import { getPrevisaoChuvas, getPrevisaoAlagamentos, getMunicipios } from '../ser
 import { useNavigate } from 'react-router-dom';
 import Diagnostico from '../components/Diagnostico';
 import WarningAmber from '@mui/icons-material/WarningAmber';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import PatternBackground, { PATTERN_PRESETS } from '../components/PatternBackground';
 
 const estados = [
@@ -172,6 +173,35 @@ const Previsoes = () => {
     setCidade(event.target.value);
   };
 
+  const formatarData = (dataString) => {
+    try {
+      if (!dataString) return 'Data não disponível';
+      
+      // Tenta diferentes formatos de data
+      let data;
+      if (dataString.includes('T')) {
+        // Formato ISO
+        data = parseISO(dataString);
+      } else if (dataString.includes('-')) {
+        // Formato YYYY-MM-DD
+        data = new Date(dataString);
+      } else {
+        // Tenta converter direto
+        data = new Date(dataString);
+      }
+      
+      if (isNaN(data.getTime())) {
+        console.warn('Data inválida:', dataString);
+        return 'Data inválida';
+      }
+      
+      return format(data, 'dd/MM/yyyy', { locale: ptBR });
+    } catch (error) {
+      console.error('Erro ao formatar data:', error);
+      return 'Data inválida';
+    }
+  };
+
   if (loading && !cidade && Object.keys(municipios).length === 0) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4 }}>
@@ -251,7 +281,7 @@ const Previsoes = () => {
                   }}
                 >
                   <Typography variant="h6" gutterBottom>
-                    {previsao.data ? format(new Date(previsao.data), 'dd/MM/yyyy') : 'Data não disponível'}
+                    {formatarData(previsao.data)}
                   </Typography>
                   
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
