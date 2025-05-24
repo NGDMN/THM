@@ -117,11 +117,21 @@ export const getPrevisaoAlagamentos = async (cidade, estado) => {
 
 // Obter histórico de chuvas
 export const getHistoricoChuvas = async (cidade, estado, dataInicial, dataFinal) => {
+  console.log('=== getHistoricoChuvas ===');
+  console.log('Parâmetros:', { cidade, estado, dataInicial, dataFinal });
+  
   try {
+    if (!cidade || !estado) {
+      console.warn('Cidade ou estado não definidos:', { cidade, estado });
+      return [];
+    }
+
     const response = await axios.get(`${API_URL}/historico/chuvas`, {
       params: { cidade, estado, dataInicial, dataFinal },
       timeout: 10000
     });
+
+    console.log('Dados da API:', response.data);
     return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.warn('API de histórico indisponível, gerando dados mockados:', error.message);
@@ -144,17 +154,28 @@ export const getHistoricoChuvas = async (cidade, estado, dataInicial, dataFinal)
       dataAtual.setDate(dataAtual.getDate() + 1);
     }
     
+    console.log('Dados mockados gerados:', dados);
     return dados;
   }
 };
 
 // Obter histórico de alagamentos
 export const getHistoricoAlagamentos = async (cidade, estado, dataInicial, dataFinal) => {
+  console.log('=== getHistoricoAlagamentos ===');
+  console.log('Parâmetros:', { cidade, estado, dataInicial, dataFinal });
+  
   try {
+    if (!cidade || !estado) {
+      console.warn('Cidade ou estado não definidos:', { cidade, estado });
+      return [];
+    }
+
     const response = await axios.get(`${API_URL}/historico/alagamentos`, {
       params: { cidade, estado, dataInicial, dataFinal },
       timeout: 10000
     });
+
+    console.log('Dados da API:', response.data);
     return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.warn('API de histórico de alagamentos indisponível:', error.message);
