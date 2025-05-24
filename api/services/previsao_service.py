@@ -1,13 +1,154 @@
 import pandas as pd
 import numpy as np
 import datetime
+import logging
 from api.utils.db_utils import execute_query, execute_dml
+
+logger = logging.getLogger(__name__)
 
 class PrevisaoService:
     """
     Serviço para cálculos de previsão de alagamentos
     """
     
+    @staticmethod
+    def limpar_previsoes_antigas():
+        """Remove previsões mais antigas que 7 dias"""
+        try:
+            query = """
+            DELETE FROM previsoes 
+            WHERE data < CURRENT_DATE - INTERVAL '7 days'
+            """
+            registros_removidos = execute_dml(query)
+            logger.info(f"Removidos {registros_removidos} registros antigos de previsões")
+            return registros_removidos
+        except Exception as e:
+            logger.error(f"Erro ao limpar previsões antigas: {str(e)}")
+            return 0
+
+    @staticmethod
+    def get_previsao_chuvas(cidade, estado):
+        """Busca previsão de chuvas para uma cidade/estado"""
+        try:
+            # Limpar previsões antigas primeiro
+            PrevisaoService.limpar_previsoes_antigas()
+            
+            query = """
+            SELECT 
+                data,
+                cidade as municipio,
+                estado,
+                precipitacao,
+                temp_min as temperatura_minima,
+                temp_max as temperatura_maxima,
+                umidade,
+                descricao,
+                icone,
+                probabilidade_alagamento,
+                nivel_risco,
+                afetados_estimados,
+                created_at
+            FROM previsoes 
+            WHERE LOWER(TRIM(cidade)) = LOWER(TRIM(%(cidade)s))
+            AND UPPER(TRIM(estado)) = UPPER(TRIM(%(estado)s))
+            AND data >= CURRENT_DATE
+            AND data <= CURRENT_DATE + INTERVAL '7 days'
+            ORDER BY data ASC
+            """
+            
+            params = {
+                'cidade': cidade,
+                'estado': estado
+            }
+            
+            result = execute_query(query, params)
+            if result.empty:
+                logger.warning(f"Nenhuma previsão encontrada para {cidade}-{estado}")
+                return []
+                
+            return result.to_dict('records')
+            
+        except Exception as e:
+            logger.error(f"Erro ao buscar previsão de chuvas: {str(e)}")
+            return []
+
+    @staticmethod
+    def get_previsao_alagamentos(cidade, estado):
+        """Busca previsão de alagamentos para uma cidade/estado"""
+        try:
+            query = """
+            SELECT 
+                data,
+                cidade as municipio,
+                estado,
+                nivel_risco,
+                probabilidade_alagamento as probabilidade,
+                afetados_estimados,
+                created_at
+            FROM previsoes 
+            WHERE LOWER(TRIM(cidade)) = LOWER(TRIM(%(cidade)s))
+            AND UPPER(TRIM(estado)) = UPPER(TRIM(%(estado)s))
+            AND data >= CURRENT_DATE
+            AND data <= CURRENT_DATE + INTERVAL '7 days'
+            AND probabilidade_alagamento > 0
+            ORDER BY data ASC
+            """
+            
+            params = {
+                'cidade': cidade,
+                'estado': estado
+            }
+            
+            result = execute_query(query, params)
+            if result.empty:
+                logger.warning(f"Nenhuma previsão de alagamento encontrada para {cidade}-{estado}")
+                return []
+                
+            return result.to_dict('records')
+            
+        except Exception as e:
+            logger.error(f"Erro ao buscar previsão de alagamentos: {str(e)}")
+            return []
+
+    @staticmethod
+    def get_alertas_atuais(cidade, estado):
+        """Busca alertas atuais para uma cidade/estado"""
+        try:
+            query = """
+            SELECT 
+                data,
+                cidade as municipio,
+                estado,
+                nivel_risco,
+                probabilidade_alagamento,
+                afetados_estimados,
+                created_at
+            FROM previsoes 
+            WHERE LOWER(TRIM(cidade)) = LOWER(TRIM(%(cidade)s))
+            AND UPPER(TRIM(estado)) = UPPER(TRIM(%(estado)s))
+            AND data >= CURRENT_DATE
+            AND data <= CURRENT_DATE + INTERVAL '7 days'
+            AND nivel_risco IN ('alto', 'medio')
+            ORDER BY data ASC, probabilidade_alagamento DESC
+            LIMIT 1
+            """
+            
+            params = {
+                'cidade': cidade,
+                'estado': estado
+            }
+            
+            result = execute_query(query, params)
+            if result.empty:
+                logger.info(f"Nenhum alerta encontrado para {cidade}-{estado}")
+                return []
+                
+            return result.to_dict('records')
+            
+        except Exception as e:
+            logger.error(f"Erro ao buscar alertas: {str(e)}")
+            return []
+
     @staticmethod
     def calcular_probabilidade_alagamento(cidade, estado, precipitacao):
         """
