@@ -10,6 +10,9 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import logging
 import os
+from dotenv import load_dotenv
+import requests
+from datetime import datetime, timedelta
 
 # Configurar logging detalhado
 logging.basicConfig(
@@ -22,6 +25,9 @@ logger = logging.getLogger(__name__)
 import sys
 # Adicionar o diretório raiz ao path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# Carregar variáveis de ambiente
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)  # Habilitar CORS para todas as rotas
@@ -207,39 +213,42 @@ def debug_historico():
     
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            result = {}
+            # Contar registros
+            cursor.execute("SELECT COUNT(*) as total FROM historico_chuvas;")
+            chuvas_total = cursor.fetchone()['total']
             
-            # Verificar tabela de chuvas
-            cursor.execute("SELECT COUNT(*) as count FROM historico_chuvas;")
-            result['chuvas_total'] = cursor.fetchone()['count']
+            cursor.execute("SELECT COUNT(*) as total FROM historico_alagamentos;")
+            alagamentos_total = cursor.fetchone()['total']
             
+            # Top 5 municípios com mais registros de chuva
             cursor.execute("""
-                SELECT municipio, estado, COUNT(*) as registros 
-                FROM historico_chuvas 
-                GROUP BY municipio, estado 
-                ORDER BY registros DESC 
-                LIMIT 10;
+                SELECT municipio, estado, COUNT(*) as total
+                FROM historico_chuvas
+                GROUP BY municipio, estado
+                ORDER BY total DESC
+                LIMIT 5;
             """)
-            result['chuvas_por_municipio'] = [dict(r) for r in cursor.fetchall()]
+            chuvas_por_municipio = cursor.fetchall()
             
-            # Verificar tabela de alagamentos
-            cursor.execute("SELECT COUNT(*) as count FROM historico_alagamentos;")
-            result['alagamentos_total'] = cursor.fetchone()['count']
-            
+            # Últimos registros de alagamentos
             cursor.execute("""
-                SELECT municipio, estado, COUNT(*) as registros 
-                FROM historico_alagamentos 
-                GROUP BY municipio, estado 
-                ORDER BY registros DESC 
-                LIMIT 10;
+                SELECT *
+                FROM historico_alagamentos
+                ORDER BY data DESC
+                LIMIT 5;
             """)
-            result['alagamentos_por_municipio'] = [dict(r) for r in cursor.fetchall()]
+            ultimos_alagamentos = cursor.fetchall()
             
         conn.close()
-        return jsonify(result)
+        return jsonify({
+            'chuvas_total': chuvas_total,
+            'alagamentos_total': alagamentos_total,
+            'chuvas_por_municipio': chuvas_por_municipio,
+            'ultimos_alagamentos': ultimos_alagamentos
+        })
         
     except Exception as e:
-        logger.error(f"❌ Erro no debug: {e}")
+        logger.error(f"❌ Erro no debug histórico: {e}")
         conn.close()
         return jsonify({'erro': str(e)}), 500
 
@@ -258,6 +267,133 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(ingestao_automatica, 'cron', hour=4, minute=0)
 scheduler.start()
 atexit.register(lambda: scheduler.shutdown())
+
+@app.route('/debug/tabelas', methods=['GET'])
+def debug_tabelas():
+    """Verificar estrutura das tabelas"""
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'erro': 'Erro de conexão'}), 500
+    
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            result = {}
+            
+            # Verificar se tabelas existem
+            cursor.execute("""
+                SELECT table_name, column_name, data_type 
+                FROM information_schema.columns 
+                WHERE table_schema = 'public' 
+                AND table_name IN ('historico_chuvas', 'historico_alagamentos', 'municipios')
+                ORDER BY table_name, ordinal_position;
+            """)
+            
+            colunas = cursor.fetchall()
+            for linha in colunas:
+                tabela = linha['table_name']
+                if tabela not in result:
+                    result[tabela] = {'colunas': [], 'existe': True}
+                result[tabela]['colunas'].append({
+                    'nome': linha['column_name'],
+                    'tipo': linha['data_type']
+                })
+            
+            # Verificar dados de exemplo
+            for tabela in ['historico_chuvas', 'historico_alagamentos', 'municipios']:
+                if tabela in result:
+                    cursor.execute(f"SELECT * FROM {tabela} LIMIT 3;")
+                    result[tabela]['exemplos'] = [dict(r) for r in cursor.fetchall()]
+            
+        conn.close()
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"❌ Erro no debug tabelas: {e}")
+        conn.close()
+        return jsonify({'erro': str(e)}), 500
+
+@app.route('/admin/popular-dados-teste', methods=['POST'])
+def popular_dados_teste():
+    """Popular banco com dados de teste"""
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'erro': 'Erro de conexão'}), 500
+    
+    try:
+        with conn.cursor() as cursor:
+            # Inserir dados de teste - Municípios
+            cursor.execute("""
+                INSERT INTO municipios (municipio, estado, latitude, longitude) 
+                VALUES 
+                    ('Rio de Janeiro', 'RJ', -22.9068, -43.1729),
+                    ('São Paulo', 'SP', -23.5505, -46.6333),
+                    ('Angra dos Reis', 'RJ', -23.0067, -44.3182)
+                ON CONFLICT DO NOTHING;
+            """)
+            
+            # Inserir dados de teste - Chuvas
+            cursor.execute("""
+                INSERT INTO historico_chuvas (municipio, estado, data, precipitacao, intensidade)
+                VALUES 
+                    ('Rio de Janeiro', 'RJ', '2024-01-15', 25.5, 'Moderada'),
+                    ('São Paulo', 'SP', '2024-01-16', 45.2, 'Forte'),
+                    ('Angra dos Reis', 'RJ', '2024-01-17', 15.8, 'Fraca')
+                ON CONFLICT DO NOTHING;
+            """)
+            
+            # Inserir dados de teste - Alagamentos
+            cursor.execute("""
+                INSERT INTO historico_alagamentos (municipio, estado, data, nivel, localizacao)
+                VALUES 
+                    ('Rio de Janeiro', 'RJ', '2024-01-15', 'Médio', 'Centro'),
+                    ('São Paulo', 'SP', '2024-01-16', 'Alto', 'Marginal'),
+                    ('Angra dos Reis', 'RJ', '2024-01-17', 'Baixo', 'Porto')
+                ON CONFLICT DO NOTHING;
+            """)
+            
+            conn.commit()
+            
+        conn.close()
+        return jsonify({
+            'status': 'sucesso',
+            'mensagem': 'Dados de teste inseridos com sucesso'
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Erro ao popular dados: {e}")
+        conn.close()
+        return jsonify({'erro': str(e)}), 500
+
+@app.route('/debug/openweather', methods=['GET'])
+def debug_openweather():
+    """Verificar configuração OpenWeather"""
+    api_key = os.getenv('OPENWEATHER_API_KEY')
+    
+    if not api_key:
+        return jsonify({
+            'erro': 'OPENWEATHER_API_KEY não configurada',
+            'configurada': False
+        })
+    
+    # Testar uma requisição simples
+    try:
+        url = f"http://api.openweathermap.org/data/2.5/weather?q=Rio de Janeiro,BR&appid={api_key}"
+        response = requests.get(url, timeout=10)
+        
+        return jsonify({
+            'configurada': True,
+            'chave_parcial': f"{api_key[:8]}...",
+            'teste_api': response.status_code == 200,
+            'resposta': response.json() if response.status_code == 200 else response.text
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'configurada': True,
+            'chave_parcial': f"{api_key[:8]}...",
+            'teste_api': False,
+            'erro': str(e)
+        })
 
 if __name__ == '__main__':
     logger.info("🚀 Iniciando API do Sistema de Previsão de Alagamentos...")
