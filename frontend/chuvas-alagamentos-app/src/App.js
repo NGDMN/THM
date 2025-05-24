@@ -8,6 +8,9 @@ import Previsoes from './pages/Previsoes';
 import Historico from './pages/Historico';
 import Sobre from './pages/Sobre';
 import Footer from './components/Footer';
+import Alertas from './pages/Alertas';
+import ApiDebugDashboard from './pages/ApiDebugDashboard';
+import './App.css';
 
 // Contextos
 import { AlertaProvider } from './contexts/AlertaContext';
@@ -110,14 +113,18 @@ function App() {
       <CssBaseline />
       <AlertaProvider>
         <Router>
-          <Navbar />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/previsoes" element={<Previsoes />} />
-            <Route path="/historico" element={<Historico />} />
-            <Route path="/sobre" element={<Sobre />} />
-          </Routes>
-          <Footer />
+          <div className="App">
+            <Navbar />
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/previsoes" element={<Previsoes />} />
+              <Route path="/historico" element={<Historico />} />
+              <Route path="/sobre" element={<Sobre />} />
+              <Route path="/alertas" element={<Alertas />} />
+              <Route path="/debug" element={<ApiDebugDashboard />} />
+            </Routes>
+            <Footer />
+          </div>
         </Router>
       </AlertaProvider>
     </ThemeProvider>
