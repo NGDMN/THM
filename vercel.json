@@ -1,8 +1,8 @@
 {
     "version": 2,
-    "buildCommand": "cd frontend/chuvas-alagamentos-app && npm install --legacy-peer-deps && npm run build",
+    "buildCommand": "cd frontend/chuvas-alagamentos-app && npm ci --legacy-peer-deps && npm run build",
     "outputDirectory": "frontend/chuvas-alagamentos-app/build",
-    "installCommand": "cd frontend/chuvas-alagamentos-app && npm install --legacy-peer-deps",
+    "installCommand": "cd frontend/chuvas-alagamentos-app && npm ci --legacy-peer-deps",
     "framework": "create-react-app",
     "rewrites": [
       {
