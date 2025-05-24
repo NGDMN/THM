@@ -1,1 +1,0 @@
-# Pacote de utilitários para a API 
