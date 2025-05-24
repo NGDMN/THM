@@ -46,10 +46,19 @@ O sistema é composto por três componentes principais:
 │   ├── services/          # Serviços
 │   └── utils/             # Utilitários
 ├── frontend/              # Frontend em React
-│   ├── public/            # Arquivos públicos
-│   └── src/               # Código fonte
+│   └── chuvas-alagamentos-app/  # Aplicação React
 ├── scripts/               # Scripts de utilidade
-└── README.md              # Documentação principal
+│   ├── diagnostico_avancado.py  # Diagnóstico avançado
+│   ├── diagnostico_simples.py   # Diagnóstico simples
+│   ├── db_correcoes.py    # Correções no banco
+│   └── ...               # Outros scripts
+├── data/                  # Dados e arquivos de configuração
+│   ├── thresholds_chuva_7d.csv
+│   ├── previsoes.csv
+│   └── ...               # Outros arquivos de dados
+├── requirements.txt       # Dependências Python
+├── render.yaml           # Configuração de deploy
+└── README.md             # Documentação principal
 ```
 
 ## Tecnologias Utilizadas

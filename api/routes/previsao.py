@@ -8,7 +8,7 @@ previsao_bp = Blueprint('previsao', __name__)
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-@previsao_bp.route('/alertas', methods=['GET'])
+@previsao_bp.route('/previsao/alertas', methods=['GET'])
 def alertas_atuais():
     """
     Endpoint para alertas de chuvas e alagamentos atuais

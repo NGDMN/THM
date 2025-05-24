@@ -17,8 +17,8 @@ app = Flask(__name__)
 CORS(app)  # Habilitar CORS para todas as rotas
 
 # Registrar blueprints
-app.register_blueprint(previsao_bp, url_prefix='/previsao')
-app.register_blueprint(historico_bp, url_prefix='/historico')
+app.register_blueprint(previsao_bp)
+app.register_blueprint(historico_bp)
 
 # Adicionar rota básica para verificar se a API está funcionando
 @app.route('/')
