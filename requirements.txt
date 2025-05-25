@@ -1,0 +1,31 @@
+# requirements.txt - Dependências do Sistema THM
+
+# Flask e extensões
+Flask==2.3.3
+Flask-CORS==4.0.0
+Werkzeug==2.3.7
+
+# Banco de dados
+psycopg2-binary==2.9.7
+
+# Processamento de dados
+pandas==2.1.1
+numpy==1.24.3
+
+# Requisições HTTP
+requests==2.31.0
+
+# Configurações
+python-dotenv==1.0.0
+
+# Scheduler para tarefas automáticas
+APScheduler==3.10.4
+
+# Logging e monitoramento (opcionais)
+colorlog==6.7.0
+
+# Ferramentas de desenvolvimento (opcionais)
+# Descomente se quiser usar:
+# pytest==7.4.2
+# black==23.7.0
+# flake8==6.0.0

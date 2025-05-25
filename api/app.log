@@ -1,0 +1,59 @@
+2025-05-24 23:42:23,475 - app - INFO - THM API startup - version 2.0.0
+2025-05-24 23:42:23,508 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-05-24 23:42:23,519 - apscheduler.scheduler - INFO - Added job "configure_scheduler.<locals>.ingestao_automatica" to job store "default"
+2025-05-24 23:42:23,520 - apscheduler.scheduler - INFO - Scheduler started
+2025-05-24 23:42:26,756 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.9:10000
+2025-05-24 23:42:26,758 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-05-24 23:45:11,354 - werkzeug - INFO - 127.0.0.1 - - [24/May/2025 23:45:11] "GET / HTTP/1.1" 200 -
+2025-05-24 23:45:12,340 - werkzeug - INFO - 127.0.0.1 - - [24/May/2025 23:45:12] "GET / HTTP/1.1" 200 -
+2025-05-24 23:45:36,083 - werkzeug - INFO - 127.0.0.1 - - [24/May/2025 23:45:36] "GET /health HTTP/1.1" 200 -
+2025-05-24 23:45:36,486 - werkzeug - INFO - 127.0.0.1 - - [24/May/2025 23:45:36] "GET /config/info HTTP/1.1" 200 -
+2025-05-24 23:45:39,770 - werkzeug - INFO - 127.0.0.1 - - [24/May/2025 23:45:39] "GET /test-db HTTP/1.1" 200 -
+2025-05-24 23:45:39,920 - werkzeug - INFO - 127.0.0.1 - - [24/May/2025 23:45:39] "GET /cache/stats HTTP/1.1" 200 -
+2025-05-25 00:10:15,801 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:10:15] "[33mGET /alertas?cidade=Rio%20de%20Janeiro&estado=RJ HTTP/1.1[0m" 404 -
+2025-05-25 00:10:16,575 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:10:16] "[33mGET /previsao/chuvas?cidade=São%20Paulo&estado=SP&dias=5 HTTP/1.1[0m" 404 -
+2025-05-25 00:10:16,619 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:10:16] "[33mGET /previsao/alagamentos?cidade=Rio%20de%20Janeiro&estado=RJ HTTP/1.1[0m" 404 -
+2025-05-25 00:10:16,634 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:10:16] "[33mGET /clima?cidade=Rio%20de%20Janeiro&estado=RJ&dias=3 HTTP/1.1[0m" 404 -
+2025-05-25 00:10:16,649 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:10:16] "[33mGET /stats/cache HTTP/1.1[0m" 404 -
+2025-05-25 00:14:10,919 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:14:10] "[33mGET /alertas?cidade=Rio%20de%20Janeiro&estado=RJ HTTP/1.1[0m" 404 -
+2025-05-25 00:14:11,412 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:14:11] "[33mGET /previsao/chuvas?cidade=São%20Paulo&estado=SP&dias=5 HTTP/1.1[0m" 404 -
+2025-05-25 00:14:11,454 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:14:11] "[33mGET /previsao/alagamentos?cidade=Rio%20de%20Janeiro&estado=RJ HTTP/1.1[0m" 404 -
+2025-05-25 00:14:11,472 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:14:11] "[33mGET /clima?cidade=Rio%20de%20Janeiro&estado=RJ&dias=3 HTTP/1.1[0m" 404 -
+2025-05-25 00:14:11,490 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:14:11] "[33mGET /stats/cache HTTP/1.1[0m" 404 -
+2025-05-25 00:14:35,665 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:14:35] "[33mGET /alertas?cidade=Rio%20de%20Janeiro&estado=RJ HTTP/1.1[0m" 404 -
+2025-05-25 00:14:36,159 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:14:36] "[33mGET /previsao/chuvas?cidade=São%20Paulo&estado=SP&dias=5 HTTP/1.1[0m" 404 -
+2025-05-25 00:14:36,177 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:14:36] "[33mGET /previsao/alagamentos?cidade=Rio%20de%20Janeiro&estado=RJ HTTP/1.1[0m" 404 -
+2025-05-25 00:14:36,195 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:14:36] "[33mGET /clima?cidade=Rio%20de%20Janeiro&estado=RJ&dias=3 HTTP/1.1[0m" 404 -
+2025-05-25 00:14:36,213 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:14:36] "[33mGET /stats/cache HTTP/1.1[0m" 404 -
+2025-05-25 00:14:53,576 - app - INFO - THM API startup - version 2.0.0
+2025-05-25 00:14:53,586 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-05-25 00:14:53,591 - apscheduler.scheduler - INFO - Added job "configure_scheduler.<locals>.ingestao_automatica" to job store "default"
+2025-05-25 00:14:53,591 - apscheduler.scheduler - INFO - Scheduler started
+2025-05-25 00:14:56,831 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.9:10000
+2025-05-25 00:14:56,831 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-05-25 00:15:25,221 - app - INFO - THM API startup - version 2.0.0
+2025-05-25 00:15:25,222 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-05-25 00:15:25,222 - apscheduler.scheduler - INFO - Added job "configure_scheduler.<locals>.ingestao_automatica" to job store "default"
+2025-05-25 00:15:25,223 - apscheduler.scheduler - INFO - Scheduler started
+2025-05-25 00:15:25,233 - apscheduler.scheduler - INFO - Scheduler has been shut down
+2025-05-25 00:15:25,234 - apscheduler.scheduler - INFO - Scheduler has been shut down
+2025-05-25 00:17:05,782 - app - INFO - THM API startup - version 2.0.0
+2025-05-25 00:17:05,793 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-05-25 00:17:05,799 - apscheduler.scheduler - INFO - Added job "configure_scheduler.<locals>.ingestao_automatica" to job store "default"
+2025-05-25 00:17:05,800 - apscheduler.scheduler - INFO - Scheduler started
+2025-05-25 00:17:08,373 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.0.9:10000
+2025-05-25 00:17:08,374 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-05-25 00:17:15,365 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:17:15] "[33mGET /alertas?cidade=Rio%20de%20Janeiro&estado=RJ HTTP/1.1[0m" 404 -
+2025-05-25 00:17:16,133 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:17:16] "[33mGET /previsao/chuvas?cidade=São%20Paulo&estado=SP&dias=5 HTTP/1.1[0m" 404 -
+2025-05-25 00:17:16,182 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:17:16] "[33mGET /previsao/alagamentos?cidade=Rio%20de%20Janeiro&estado=RJ HTTP/1.1[0m" 404 -
+2025-05-25 00:17:16,199 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:17:16] "[33mGET /clima?cidade=Rio%20de%20Janeiro&estado=RJ&dias=3 HTTP/1.1[0m" 404 -
+2025-05-25 00:17:16,214 - werkzeug - INFO - 127.0.0.1 - - [25/May/2025 00:17:16] "[33mGET /stats/cache HTTP/1.1[0m" 404 -
